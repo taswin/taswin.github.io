@@ -28,6 +28,22 @@
       <img src="http://mc-heads.net/avatar//160.png_" alt="No Immage Found">
       <hr>
     </pre>
+    
+    ?>
+      <form>
+        <div class="row">
+          <div class="col-md-4">
+            <input name="uuiduser" value="<?php echo @$_GET['uuiduser']; ?>" type="text" class="form-control" placeholder="Username (comma seperate: Dinnerbone,Notch)">
+          </div>
+          <div class="col-md-4">
+            <select class="form-control" name="uuidagent"><option value="minecraft">Minecraft</option><option value="scrolls">Scrolls</option></select>
+          </div>
+          <div class="col-md-4">
+            <input type="submit" value="Fetch" class="btn btn-default btn-block">
+          </div>
+        </div>
+	</form>
+      <?php
+    ?>
   </body>
 </html>
- 

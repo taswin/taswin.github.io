@@ -5,17 +5,23 @@
       Frends
     </h1>
 
-    <form action="index.html">
-      Enter name to display face for:
-      <br>
-      <input name="uuiduser" value="" type="text">
-      <br>
-      <input type="submit" value="Display">
-      <br>
-    </form>
+    Enter name to display face for:
+    <br>
+    <input id="uuiduser" name="uuiduser" value="" type="text">
+    <br>
+    <input type="button" value="Display" onclick="search()">
+    <br>
+    
+    <script>
+    function search()
+    {
+      var uuiduser = document.getElementById("useruuid").value;
+      document.getElementById("image").src = "http://mc-heads.net/avatar/" + uuiduser + "/160.png";
+    }
+    </script>
     
     <code>
-      <img src="http://mc-heads.net/avatar/" + uuiduser + "/160.png" alt="No Immage Found">
+      <img id="image" src="http://mc-heads.net/avatar//160.png" alt="No Immage Found">
     </code>
     
     <pre>

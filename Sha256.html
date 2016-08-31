@@ -2,10 +2,29 @@
 <html>
 <body>
 
-<h1>My First Web Page</h1>
-<p>My first paragraph.</p>
+<!DOCTYPE html>
+<html>
+<body>
+
+<form id="frm1" action="form_action.asp">
+  Password: <input type="text" name="password" value="taswin"><br>
+</form>
+
+<button onclick="myFunction()">Try it</button>
+
+<p id="demo"></p>
 
 <script>
+function myFunction() {
+    var x = document.getElementById("frm1");
+    var text = "";
+    var i;
+    for (i = 0; i < x.length ;i++) {
+        text += x.elements[i].value + "<br>";
+    }
+    document.getElementById("demo").innerHTML = Sha256.hash(text);
+}
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 /*  SHA-256 implementation in JavaScript                (c) Chris Veness 2002-2014 / MIT Licence  */
 /*                                                                                                */

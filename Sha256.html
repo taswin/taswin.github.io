@@ -28,9 +28,9 @@ function myFunction() {
     document.getElementById("demo").innerHTML = passwordHash;
     document.getElementById("demo").innerHTML = UHSaltedPH;
     
-    for (i in x.elements)
+    for (var i = 0; i < x.length; i++)
     {
-        document.getElementById("demo").innerHTML = I;
+        document.getElementById("demo").innerHTML = i + ": " + x.elements[i];
     }
 }
 

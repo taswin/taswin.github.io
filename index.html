@@ -7,7 +7,7 @@
 
     Enter name to display face for:
     <br>
-    <input id="uuiduser" name="uuiduser" value="" type="text">
+    <input id="namein" type="text">
     <br>
     <input type="button" value="Display" onclick="search()">
     <br>
@@ -15,13 +15,13 @@
     <script>
     function search()
     {
-      var uuiduser = document.getElementById("useruuid").value;
-      document.getElementById("image").src = "http://mc-heads.net/avatar/" + uuiduser + "/160.png";
+      var uuiduser = document.getElementById("namein").value;
+      document.getElementById("imageout").src = "http://mc-heads.net/avatar/" + uuiduser + "/160.png";
     }
     </script>
     
     <code>
-      <img id="image" src="http://mc-heads.net/avatar//160.png" alt="No Immage Found">
+      <img id="imageout" src="http://mc-heads.net/avatar//160.png" alt="No Immage Found">
     </code>
     
     <pre>

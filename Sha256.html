@@ -17,12 +17,15 @@
 <script>
 function myFunction() {
     var x = document.getElementById("frm1");
-    var text = "";
-    var i;
-    for (i = 0; i < x.length ;i++) {
-        text += x.elements[i].value + "<br>";
-    }
-    document.getElementById("demo").innerHTML = Sha256.hash(text);
+    var username = x.elements[0].value;
+    var password = x.elements[1].value;
+    var usernameHash = UnPw =+ Sha256.hash(username);
+    var paswordHash = UnPw =+ Sha256.hash(username);
+    var UHSaltedPH = UnPw =+ Sha256.hash(username);
+
+    document.getElementById("demo").innerHTML = usernameHash;
+    document.getElementById("demo").innerHTML = passwordHash;
+    document.getElementById("demo").innerHTML = UHSaltedPH;
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */

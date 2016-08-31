@@ -19,14 +19,14 @@
 function myFunction() {
     var x = document.getElementById("frm1");
     var username = x.elements[0].value;
-    var password = x.elements[1].value;
+    //var password = x.elements[1].value;
     var usernameHash = Sha256.hash(username);
-    var paswordHash = Sha256.hash(password);
-    var UHSaltedPH = Sha256.hash(usernameHash + passwordHash);
+    //var paswordHash = Sha256.hash(password);
+    //var UHSaltedPH = Sha256.hash(usernameHash + passwordHash);
 
-    document.getElementById("demo").innerHTML = usernameHash;
-    document.getElementById("demo").innerHTML = passwordHash;
-    document.getElementById("demo").innerHTML = UHSaltedPH;
+    //document.getElementById("demo").innerHTML = usernameHash;
+    //document.getElementById("demo").innerHTML = passwordHash;
+    //document.getElementById("demo").innerHTML = UHSaltedPH;
     
     for (var i = 0; i < x.length; i++)
     {

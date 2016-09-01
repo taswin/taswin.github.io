@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<form action="https://api.mojang.com/user/profiles/816bedca-0bfa-4239-8b36-d234463b9c33/names">
+  <input type="submit" value="Submit">
+</form>
+
+<script>
+var MojangAPI = require('mojang-api');
+MojangAPI.nameHistory('853c80ef3c3749fdaa49938b674adae6', function(err, res) {
+    if (err)
+        console.log(err);
+    else {
+        if (res.length == 1) {
+            console.log(res[0].name + " is very content with their existing username, because they didn't change it. Excellent job.")
+        } else {
+            var lastChange = res[res.length - 1];
+            var at = new Date(lastChange.changedToAt);
+            console.log(lastChange.name + " wasn't so content with their username. They last changed their username at " + at + ".");
+        }
+    }
+});
+</script>
+
+</body>
+</html>

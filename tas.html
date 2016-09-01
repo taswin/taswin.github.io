@@ -2,14 +2,15 @@
 <html>
 <body>
 
-<form action="https://api.mojang.com/user/profiles/816bedca-0bfa-4239-8b36-d234463b9c33/names">
+<form action="uuid.php">
   <input type="submit" value="Submit">
 </form>
 
 <button type="button" value="test" onclick="tas()">
 
 <script>
-var MojangAPI = require('mojang-api');
+//https://api.mojang.com/user/profiles/816bedca-0bfa-4239-8b36-d234463b9c33/names
+//var MojangAPI = require('mojang-api');
 function tas()
 {
   MojangAPI.nameHistory('816bedca0bfa42398b36d234463b9c33', function(err, res)

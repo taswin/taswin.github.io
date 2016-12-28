@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="400" height="400"
+style="border:1px solid #c3c3c3;">
+Your browser does not support the canvas element.
+</canvas>
+
+<script>
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+
+drawLine(200, 0, 200, 400, "#FF0000");
+drawLine(0, 200, 400, 200, "#00FF00");
+
+ctx.font = "30px Arial";
+ctx.fillStyle = "#0000FF";
+//ctx.textAlign = "center";
+
+ctx.fillText("T",5,195);
+ctx.fillText("X",205,25);
+
+for (X = -190; X < 190; X = X + 0.1)
+{
+	var Y = X;
+    
+    var x = X + 200;
+    var y = 200 - Y;
+    drawDot(x, y, "#000000");
+    sleep(2);
+}
+
+function drawDot(X, Y, colour)
+{
+	drawLine(X, Y, X + 1, Y + 1, colour);
+}
+
+function drawLine(startX, startY, endX, endY, colour)
+{
+    ctx.beginPath();
+    
+	ctx.moveTo(startX,startY);
+	ctx.lineTo(endX,endY);
+    
+	ctx.strokeStyle = colour;
+	ctx.stroke();
+	ctx.closePath();
+}
+
+function sleep(milliseconds)
+{
+	var start = new Date().getTime();
+	for (var i = 0; i < 1e7; i++)
+	{
+		if ((new Date().getTime() - start) > milliseconds)
+        {
+			break;
+		}
+    }
+}
+</script>
+
+</body>
+</html>

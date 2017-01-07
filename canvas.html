@@ -1,54 +1,6 @@
 <!DOCTYPE html>
 <html>
 <body>
-
-<canvas id="canvas" width="400" height="400"
-style="border:1px solid #c3c3c3;">
-Your browser does not support the canvas element.
-</canvas>
-
-<script>
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-drawLine(200, 0, 200, 400, "#FF0000");
-drawLine(0, 200, 400, 200, "#00FF00");
-ctx.font = "30px Arial";
-ctx.fillStyle = "#0000FF";
-ctx.fillText("T",5,195);
-ctx.fillText("X",205,25);
-
-draw(-190);
-function draw(X)
-{
-	var Y = X;
-    
-    var x = X + 200;
-    var y = 200 - Y;
-    drawDot(x, y, "#000000");
-    
-    X += 1;
-    if (X <=190)
-    {
-    	var loopTimer = setTimeout('draw(' + (X) +')',10);
-    }
-}
-function drawDot(X, Y, colour)
-{
-	drawLine(X, Y, X + 1, Y + 1, colour);
-}
-
-function drawLine(startX, startY, endX, endY, colour)
-{
-    ctx.beginPath();
-    
-	ctx.moveTo(startX,startY);
-	ctx.lineTo(endX,endY);
-    
-	ctx.strokeStyle = colour;
-	ctx.stroke();
-	ctx.closePath();
-}
-</script>
-
+	<script async src="//jsfiddle.net/taswin/220L1xrm/15/embed/"></script>
 </body>
 </html>

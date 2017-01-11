@@ -65,13 +65,16 @@ var objectNum = 0;
 resize_canvas();
 function resize_canvas() {
   canvas = document.getElementById("canvas");
-  if (canvas.width < window.innerWidth - 290) {
-    canvas.width = window.innerWidth - 290;
+  var winWidth = window.innerWidth - 300;
+  var winHeight = window.innerHeight - 30;
+  
+  if (canvas.width < winWidth) {
+    canvas.width = winWidth;
     width = canvas.width;
   }
 
-  if (canvas.height < window.innerHeight - 20) {
-    canvas.height = window.innerHeight - 20;
+  if (canvas.height < winHeight) {
+    canvas.height = winHeight;
     height = canvas.height;
   }
 }

@@ -20,7 +20,7 @@ Object <h name="num">1:</h>
   <button onclick="addObject()" name="addObject">Add object</button>
 </div>
 
-<body onresize="resize_canvas()">
+<body>
   <button onclick="draw(false)">Draw</button>
   <button onclick="draw(true)">Animate</button>
   <br>
@@ -30,6 +30,13 @@ Object <h name="num">1:</h>
 <style>
 canvas {
   border: #666 1px solid;
+  position: absolute; 
+  top: 0px;
+  left: 0px;
+}
+
+body { 
+  overflow: hidden;
 }
 
 #objects {
@@ -42,6 +49,7 @@ canvas {
   padding: 10px;
   border: #666 1px solid;
 }
+
 </style>
 
 <script>
@@ -61,23 +69,6 @@ var min = {
 var border = 10;
 var timeouts = [];
 var objectNum = 0;
-
-resize_canvas();
-function resize_canvas() {
-  canvas = document.getElementById("canvas");
-  var winWidth = window.innerWidth - 300;
-  var winHeight = window.innerHeight - 30;
-  
-  if (canvas.width < winWidth) {
-    canvas.width = winWidth;
-    width = canvas.width;
-  }
-
-  if (canvas.height < winHeight) {
-    canvas.height = winHeight;
-    height = canvas.height;
-  }
-}
 
 function draw(animated) {
   canvas = document.getElementById('canvas');

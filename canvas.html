@@ -2,6 +2,7 @@
 <html>
 <div name="objects" id="objects">
   <pre>
+<button onclick="draw(false)">Draw</button> <button onclick="draw(true)">Animate</button>
 Light speed: <input type="text" name="lightm" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="-1">m / <input type="text" name="lights" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">s
 </pre>
   <div name="object">
@@ -21,9 +22,6 @@ Object <h name="num">1:</h>
 </div>
 
 <body>
-  <button onclick="draw(false)">Draw</button>
-  <button onclick="draw(true)">Animate</button>
-  <br>
   <canvas id="canvas"></canvas>
 </body>
 
@@ -34,7 +32,6 @@ canvas {
   width: auto;
   align: left;
   padding: 10px;
-  top: 10px;
   right: 280px;
   
 }

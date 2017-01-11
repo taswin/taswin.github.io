@@ -1,7 +1,50 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <script>
+<div name="objects" id="objects">
+  <pre>
+Light speed: <input type="text" name="lightm" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="-1">m / <input type="text" name="lights" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">s
+</pre>
+  <div name="object">
+    <pre>
+Object <h name="num">1:</h>
+  Emits light: <input type="checkbox" name="emitsLight" checked>
+  Start:
+    X: <input type="text" name="startX" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="0">
+    Y: <input type="text" name="startY" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="0">
+  Velocity:
+    1: <input type="text" name="vel1m" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">m / <input type="text" name="vel1s" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="2">s
+    2: <input type="text" name="vel2m" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="-1">m / <input type="text" name="vel2s" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="2">s
+  Time of velocity change: <input type="text" name="velChange" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="200">ms
+</pre>
+  </div>
+  <button onclick="addObject()" name="addObject">Add object</button>
+</div>
+
+<body onresize="resize_canvas()">
+  <button onclick="draw(false)">Draw</button>
+  <button onclick="draw(true)">Animate</button>
+  <br>
+  <canvas id="canvas" width="200" height="100"></canvas>
+</body>
+
+<style>
+canvas {
+  border: #666 1px solid;
+}
+
+#objects {
+  width: 250px;
+  height: 400px;
+  align: right;
+  overflow: auto;
+  position: absolute;
+  right: 0px;
+  padding: 10px;
+  border: #666 1px solid;
+}
+</style>
+
+<script>
 var canvas;
 var ctx;
 var width;
@@ -19,6 +62,20 @@ var border = 10;
 var timeouts = [];
 var objectNum = 0;
 
+resize_canvas();
+function resize_canvas() {
+  canvas = document.getElementById("canvas");
+  if (canvas.width < window.innerWidth) {
+    canvas.width = window.innerWidth;
+    width = canvas.width;
+  }
+
+  if (canvas.height < window.innerHeight) {
+    canvas.height = window.innerHeight;
+    height = canvas.height;
+  }
+}
+
 function draw(animated) {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d');
@@ -31,6 +88,7 @@ function draw(animated) {
   for (var i = 0; i < timeouts.length; i++) {
     clearTimeout(timeouts[i]);
   }
+
   ctx.setTransform(1, 0, 0, -1, -min.x, max.y);
   ctx.clearRect(min.x, min.y, max.x - min.x, max.y - min.y);
   velLight = document.getElementsByName('lights')[0].value / document.getElementsByName('lightm')[0].value;
@@ -45,17 +103,17 @@ function draw(animated) {
     var start = [x, y];
     var vel = [document.getElementsByName('vel1s')[i].value / document.getElementsByName('vel1m')[i].value, document.getElementsByName('vel2s')[i].value / document.getElementsByName('vel2m')[i].value];
     var velChange = document.getElementsByName('velChange')[i].value;
-    switch (animated)
-	{
-	  case true:
-	    animateLineG(emitsLight, start, parseInt(y), vel, velChange, "#000000");
-		break;
-	  case false:
-	    drawLineG(emitsLight, start, parseInt(y), vel, velChange, "#000000");
-		break;
-	}
+    switch (animated) {
+      case true:
+        animateLineG(emitsLight, start, parseInt(y), vel, velChange, "#000000");
+        break;
+      case false:
+        drawLineG(emitsLight, start, parseInt(y), vel, velChange, "#000000");
+        break;
+    }
   }
 }
+
 function animateLineG(emitsLight, start, y, vel, velChange, colour) {
   var x = start[0] - (start[1] / vel[0]) + (y / vel[0]);
   drawPoint(x, y, colour);
@@ -80,6 +138,7 @@ function animateLineG(emitsLight, start, y, vel, velChange, colour) {
     }, 30));
   }
 }
+
 function drawLineG(emitsLight, start, y, vel, velChange, colour) {
   var x = 0;
   while (x < max.x - border && x > min.x + border && y < max.y - border && y > min.y + border && (x > 1 || x < -1 || velChange > -1)) {
@@ -102,6 +161,7 @@ function drawLineG(emitsLight, start, y, vel, velChange, colour) {
     }
   }
 }
+
 function drawLineP(x1, y1, x2, y2, colour) {
   ctx.beginPath();
   ctx.strokeStyle = colour;
@@ -110,12 +170,14 @@ function drawLineP(x1, y1, x2, y2, colour) {
   ctx.stroke();
   ctx.closePath();
 }
+
 function drawPoint(x, y, colour) {
   ctx.beginPath();
   ctx.fillStyle = colour;
   ctx.fillRect(x - 1, y - 1, 2, 2);
   ctx.closePath();
 }
+
 function addObject() {
   var objects = document.getElementsByName("objects")[0];
   var object = document.getElementsByName("object")[0];
@@ -127,61 +189,15 @@ function addObject() {
   newObject.appendChild(remove);
   objects.appendChild(newObject);
   objects.insertBefore(newObject, document.getElementsByName("addObject")[0]);
-  
+
   objectNum += 1;
   document.getElementsByName("num")[objectNum].innerHTML = "" + (objectNum + 1);
 }
+
 function removeObject(e) {
   e.parentNode.remove();
-  
+
   objectNum -= 1;
 }
-    </script>
-    <style>
-  canvas {
-  border: #666 1px solid;
-  min-width:960px;
-  margin-left:0px;
-  margin-right:260px;
-}
-#objects {
-  width: 250px;
-  height: 400px;
-  align: right;
-  overflow: auto;
-  position: absolute;
-  right: 0px;
-  padding: 10px;
-  border: #666 1px solid;
-}
-    </style
-  </head>
-  <body>
-<div name="objects" id="objects">
-<pre>
-Light speed: <input type="text" name="lightm" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="-1">m / <input type="text" name="lights" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">s
-</pre>
-  <div name="object">
-    <pre>
-Object <h name="num">1:</h>
-  Emits light: <input type="checkbox" name="emitsLight" checked>
-  Start:
-    X: <input type="text" name="startX" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="0">
-    Y: <input type="text" name="startY" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="0">
-  Velocity:
-    1: <input type="text" name="vel1m" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">m / <input type="text" name="vel1s" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="2">s
-    2: <input type="text" name="vel2m" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="-1">m / <input type="text" name="vel2s" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="2">s
-  Time of velocity change: <input type="text" name="velChange" maxLength=5 size=1 onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="200">ms
-</pre>
-  </div>
-<button onclick="addObject()" name="addObject">Add object</button>
-</div>
-
-<body>
-  <button onclick="draw(false)">Draw</button>
-  <button onclick="draw(true)">Animate</button>
-  <br>
-  <canvas id="canvas" width="800" height="420"></canvas>
-</body>
-  </body>
+</script>
 </html>

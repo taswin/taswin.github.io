@@ -82,8 +82,8 @@ function draw(animated) {
   velLight = document.getElementsByName('lights')[0].value / document.getElementsByName('lightm')[0].value;
   drawLineP(min.x + border, 0, max.x - border, 0, "#0000FF");
   drawLineP(0, min.y + border, 0, max.y - border, "#0000FF");
-  drawLineG(false, [0, 0], 0, velLight, 0, "#00FF00");
-  drawLineG(false, [0, 0], 0, -velLight, 0, "#00FF00");
+  drawLineG(false, [0, 0], 0, [velLight, velLight], 0, "#00FF00");
+  drawLineG(false, [0, 0], 0, [-velLight, -velLight], 0, "#00FF00");
   for (var i = 0; i < document.getElementsByName('object').length; i++) {
     var emitsLight = document.getElementsByName('emitsLight')[i].checked;
     var x = document.getElementsByName('startX')[i].value;
@@ -128,25 +128,25 @@ function animateLineG(emitsLight, start, y, vel, velChange, colour) {
 }
 
 function drawLineG(emitsLight, start, y, vel, velChange, colour) {
-  var x = 0;
-  while (x < max.x - border && x > min.x + border && y < max.y - border && y > min.y + border && (x > 1 || x < -1 || velChange > -1)) {
-    var x = start[0] - (start[1] / vel[0]) + (y / vel[0]);
-    drawPoint(x, y, colour);
-    if (y % 20 == 0 && emitsLight) {
-      if ((x > 0 && velLight < 0) || (x <= 0 && velLight >= 0)) {
-        drawLineG(false, [x, y], y, [velLight, velLight], 0, "#FF0000");
-      } else {
-        drawLineG(false, [x, y], y, [-velLight, -velLight], 0, "#FF0000");
-      }
+  var x = start[0] - (start[1] / vel[0]) + (y / vel[0]);
+  drawPoint(x, y, colour);
+  if (y % 20 == 0 && emitsLight) {
+    if ((x > 0 && velLight < 0) || (x <= 0 && velLight >= 0)) {
+      drawLineG(false, [x, y], y, [velLight, velLight], 0, "#FF0000");
+    } else {
+      drawLineG(false, [x, y], y, [-velLight, -velLight], 0, "#FF0000");
     }
-    y += 1;
-    if (velChange > 0) {
-      velChange -= 1;
-    } else if (velChange == 0) {
-      start = [x, y];
-      vel = [vel[1], vel[0]];
-      velChange = -1;
-    }
+  }
+  y += 1;
+  if (velChange > 0) {
+    velChange -= 1;
+  } else if (velChange == 0) {
+    start = [x, y];
+    vel = [vel[1], vel[0]];
+    velChange = -1;
+  }
+  if (x < max.x - border && x > min.x + border && y < max.y - border && y > min.y + border && (x > 1 || x < -1 || velChange > -1)) {
+    drawLineG(emitsLight, start, y, vel, velChange, colour);
   }
 }
 

@@ -35,6 +35,12 @@ canvas {
   display: block;
 }
 
+html, body {
+  width:  100%;
+  height: 100%;
+  margin: 0px;
+}
+
 #objects {
   width: 250px;
   height: 400px;
@@ -69,23 +75,31 @@ var objectNum = 0;
 function draw(animated) {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d');
+  
+  ctx.canvas.width  = window.innerWidth - 290;
+  ctx.canvas.height = window.innerHeight;
+  
   width = canvas.width;
   height = canvas.height;
   max.x = width / 2;
   min.x = max.x - width;
   max.y = height - 20; // / 2;
   min.y = max.y - height;
+  
   for (var i = 0; i < timeouts.length; i++) {
     clearTimeout(timeouts[i]);
   }
 
   ctx.setTransform(1, 0, 0, -1, -min.x, max.y);
   ctx.clearRect(min.x, min.y, max.x - min.x, max.y - min.y);
+  
   velLight = document.getElementsByName('lights')[0].value / document.getElementsByName('lightm')[0].value;
+  
   drawLineP(min.x + border, 0, max.x - border, 0, "#0000FF");
   drawLineP(0, min.y + border, 0, max.y - border, "#0000FF");
   drawLineG(false, [0, 0], 0, [velLight, velLight], 0, "#00FF00");
   drawLineG(false, [0, 0], 0, [-velLight, -velLight], 0, "#00FF00");
+  
   for (var i = 0; i < document.getElementsByName('object').length; i++) {
     var emitsLight = document.getElementsByName('emitsLight')[i].checked;
     var x = document.getElementsByName('startX')[i].value;

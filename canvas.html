@@ -124,9 +124,9 @@ function animateLineG(emitsLight, start, y, vel, velChange, colour) {
   drawPoint(x, y, colour);
   if (y % 20 == 0 && emitsLight) {
     if ((x > 0 && velLight < 0) || (x <= 0 && velLight >= 0)) {
-      animateLineG(false, [x, y], y, [velLight, velLight], 10, "#FF0000");
+      animateLineG(false, [x, y], y, [velLight, velLight], 0, "#FF0000");
     } else {
-      animateLineG(false, [x, y], y, [-velLight, -velLight], 10, "#FF0000");
+      animateLineG(false, [x, y], y, [-velLight, -velLight], 0, "#FF0000");
     }
   }
   y += 1;

@@ -98,8 +98,8 @@ function draw(animated) {
   
   drawLineP(min.x + border, 0, max.x - border, 0, "#0000FF");
   drawLineP(0, min.y + border, 0, max.y - border, "#0000FF");
-  drawLineG(false, [0, 0], 0, [velLight, velLight], 0, "#00FF00");  //Not working
-  drawLineG(false, [0, 0], 0, [-velLight, -velLight], 0, "#00FF00");  //Not working
+  drawLineG(false, [0, 0], 0, [velLight, velLight], 10, "#00FF00");
+  drawLineG(false, [0, 0], 0, [-velLight, -velLight], 10, "#00FF00");
   
   for (var i = 0; i < document.getElementsByName('object').length; i++) {
     var emitsLight = document.getElementsByName('emitsLight')[i].checked;

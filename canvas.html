@@ -96,10 +96,10 @@ function draw(animated) {
   
   velLight = document.getElementsByName('lights')[0].value / document.getElementsByName('lightm')[0].value;
   
-  drawLineP(min.x + border, 0, max.x - border, 0, "#0000FF");
-  drawLineP(0, min.y + border, 0, max.y - border, "#0000FF");
-  drawLineG(false, [0, 0], 0, [velLight, velLight], 10, "#00FF00");
-  drawLineG(false, [0, 0], 0, [-velLight, -velLight], 10, "#00FF00");
+  drawAxis(min.x + border, 0, max.x - border, 0, "#0000FF");
+  drawAxis(0, min.y + border, 0, max.y - border, "#0000FF");
+  drawLight(false, [0, 0], 0, [velLight, velLight], 10, "#00FF00");
+  drawLight(false, [0, 0], 0, [-velLight, -velLight], 10, "#00FF00");
   
   for (var i = 0; i < document.getElementsByName('object').length; i++) {
     var emitsLight = document.getElementsByName('emitsLight')[i].checked;
@@ -110,23 +110,23 @@ function draw(animated) {
     var velChange = document.getElementsByName('velChange')[i].value;
     switch (animated) {
       case true:
-        animateLineG(emitsLight, start, parseInt(y), vel, velChange, "#000000");
+        animateLight(emitsLight, start, parseInt(y), vel, velChange, "#000000");
         break;
       case false:
-        drawLineG(emitsLight, start, parseInt(y), vel, velChange, "#000000");
+        drawLight(emitsLight, start, parseInt(y), vel, velChange, "#000000");
         break;
     }
   }
 }
 
-function animateLineG(emitsLight, start, y, vel, velChange, colour) {
+function animateLight(emitsLight, start, y, vel, velChange, colour) {
   var x = start[0] - (start[1] / vel[0]) + (y / vel[0]);
   drawPoint(x, y, colour);
   if (y % 20 == 0 && emitsLight) {
     if ((x > 0 && velLight < 0) || (x <= 0 && velLight >= 0)) {
-      animateLineG(false, [x, y], y, [velLight, velLight], 0, "#FF0000");
+      animateLight(false, [x, y], y, [velLight, velLight], 0, "#FF0000");
     } else {
-      animateLineG(false, [x, y], y, [-velLight, -velLight], 0, "#FF0000");
+      animateLight(false, [x, y], y, [-velLight, -velLight], 0, "#FF0000");
     }
   }
   y += 1;
@@ -139,12 +139,12 @@ function animateLineG(emitsLight, start, y, vel, velChange, colour) {
   }
   if (x < max.x - border && x > min.x + border && y < max.y - border && y > min.y + border && (x > 1 || x < -1 || velChange > -1)) {
     timeouts.push(setTimeout(function() {
-      animateLineG(emitsLight, start, y, vel, velChange, colour);
+      animateLight(emitsLight, start, y, vel, velChange, colour);
     }, 30));
   }
 }
 
-function drawLineG(emitsLight, start, y, vel, velChange, colour) {
+function drawLight(emitsLight, start, y, vel, velChange, colour) {
   var x = start[0] - (start[1] / vel[0]) + (y / vel[0]);
   drawPoint(x, y, colour);
   if (y % 20 == 0 && emitsLight) {
@@ -163,11 +163,11 @@ function drawLineG(emitsLight, start, y, vel, velChange, colour) {
     velChange = -1;
   }
   if (x < max.x - border && x > min.x + border && y < max.y - border && y > min.y + border && (x > 1 || x < -1 || velChange > -1)) {
-    drawLineG(emitsLight, start, y, vel, velChange, colour);
+    drawLight(emitsLight, start, y, vel, velChange, colour);
   }
 }
 
-function drawLineP(x1, y1, x2, y2, colour) {
+function drawAxis(x1, y1, x2, y2, colour) {
   ctx.beginPath();
   ctx.strokeStyle = colour;
   ctx.moveTo(x1, y1);

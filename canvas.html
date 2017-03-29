@@ -3,7 +3,7 @@
 <meta charset="utf-8"/>
   <body onload="draw();" onresize="draw();">
     <div class="cc">
-      Barn v3.4
+      Barn v3.3
       <div class="c1">
         <canvas width=1000px height=1000px></canvas>
       </div>
@@ -150,11 +150,6 @@
     #load
     {
       /*content: "load";*/
-    }
-    
-    button,#load
-    {
-      height: 22px;
     }
   </style>
   
@@ -312,10 +307,9 @@
       
       var canvas = document.getElementsByTagName("canvas")[2];
       var ctx = canvas.getContext('2d');
+      canvas.style.height = "10px";
       
       ctx.fillStyle = "#FFFFFF";
-      canvas.style.width = '100%';
-      canvas.style.height = '75%';
       ctx.fillRect(axo, 0, canvas.width, canvas.height);
       
       for (a in animation)
@@ -329,10 +323,8 @@
       document.getElementById("pause").style.display = "none";
       document.getElementById("resume").style.display = "none";
       document.getElementById("stop").style.display = "none";
-      var frame = frame_number;
+      
       draw();
-      frame_number = frame;
-      if (frame > -1) transformTo(document.getElementsByClassName("transform")[frame]);
     }
     
     function saveConfig(name)
@@ -603,14 +595,18 @@
       var transformedLines = JSON.parse(JSON.stringify(lines));
       for (var l in lines)
       {
-        var v = (lines[frame].End.t - lines[frame].Start.t) / (lines[frame].End.x - lines[frame].Start.x);
-        var g = 1 / Math.sqrt(Math.abs(1 - Math.pow(v, 2)));
+        var v = lines[frame].Velocity;
+        var g = 1 / Math.sqrt(1 - Math.pow(v, 2));
         
         transformedLines[l].Start.x = g * (lines[l].Start.x - v * lines[l].Start.t);
         transformedLines[l].Start.t = g * (lines[l].Start.t - v * lines[l].Start.x);
         
         transformedLines[l].End.x = g * (lines[l].End.x - v * lines[l].End.t);
         transformedLines[l].End.t = g * (lines[l].End.t - v * lines[l].End.x);
+        
+        transformedLines[l].Velocity = v;
+        transformedLines[l].Distance = g * (lines[l].Distance - v * lines[l].Duration);
+        transformedLines[l].Duration = g * (lines[l].Duration - v * lines[l].Distance);
       }
       
       var translate =
@@ -850,20 +846,7 @@
         switch (lines[l].Name)
         {
           case BFO:
-            animated.BFO =
-            {
-              Name: lines[l].Name,
-              Start:
-              {
-                x: lines[l].Start.x,
-                t: lines[l].Start.t
-              },
-              End:
-              {
-                x: lines[l].End.x,
-                t: lines[l].End.t
-              }
-            };
+            animated.BFO = lines[l];
             break;
           
           case BFC:
@@ -884,71 +867,19 @@
             break;
           
           case BBO:
-            animated.BBO =
-            {
-              Name: lines[l].Name,
-              Start:
-              {
-                x: lines[l].Start.x,
-                t: lines[l].Start.t
-              },
-              End:
-              {
-                x: lines[l].End.x,
-                t: lines[l].End.t
-              }
-            };
+            animated.BBO = lines[l];
             break;
           
           case BBC:
-            animated.BBC =
-            {
-              Name: lines[l].Name,
-              Start:
-              {
-                x: lines[l].Start.x,
-                t: lines[l].Start.t
-              },
-              End:
-              {
-                x: lines[l].End.x,
-                t: lines[l].End.t
-              }
-            };
+            animated.BBC = lines[l];
             break;
           
           case PF:
-            animated.PF =
-            {
-              Name: lines[l].Name,
-              Start:
-              {
-                x: lines[l].Start.x,
-                t: lines[l].Start.t
-              },
-              End:
-              {
-                x: lines[l].End.x,
-                t: lines[l].End.t
-              }
-            };
+            animated.PF = lines[l];
             break;
           
           case PB:
-            animated.PB =
-            {
-              Name: lines[l].Name,
-              Start:
-              {
-                x: lines[l].Start.x,
-                t: lines[l].Start.t
-              },
-              End:
-              {
-                x: lines[l].End.x,
-                t: lines[l].End.t
-              }
-            };
+            animated.PB = lines[l];
             break;
         }
       }
@@ -1130,10 +1061,10 @@
               else if (!isFinite(vel))
               {
                 mt1 = t;
-                mx1 = lines[l].Start.x - lines[l].LineWidth * 4;
+                mx1 = lines[l].Start.x - lines[l].LineWidth * 2;
                 
                 mt2 = t;
-                mx2 = lines[l].Start.x + lines[l].LineWidth * 4;
+                mx2 = lines[l].Start.x + lines[l].LineWidth * 2;
               }
               
               ctx.moveTo(mx1, mt1);
@@ -1144,10 +1075,10 @@
           {
             for (var x = lines[l].Start.x; x <= lines[l].End.x; x += lines[l].LineWidth * 10)
             {
-              mt1 = lines[l].Start.t - lines[l].LineWidth * 4;
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 2;
               mx1 = x;
               
-              mt2 = lines[l].Start.t + lines[l].LineWidth * 4;
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 2;
               mx2 = x;
               
               ctx.moveTo(mx1, mt1);
@@ -1181,10 +1112,10 @@
                 else if (!isFinite(vel))
                 {
                   mt1 = t;
-                  mx1 = lines[l].Start.x - lines[l].LineWidth * 8;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 4;
                   
                   mt2 = t;
-                  mx2 = lines[l].Start.x + lines[l].LineWidth * 8;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 4;
                 }
                 
                 ctx.moveTo(mx1, mt1);
@@ -1211,10 +1142,10 @@
                 else if (!isFinite(vel))
                 {
                   mt1 = t;
-                  mx1 = lines[l].Start.x - lines[l].LineWidth * 8;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 4;
                   
                   mt2 = t;
-                  mx2 = lines[l].Start.x + lines[l].LineWidth * 8;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 4;
                 }
                 
                 ctx.moveTo(mx1, mt1);
@@ -1226,10 +1157,10 @@
           {
             for (var x = 0; x <= lines[l].End.x - coords.border; x += lines[l].TimeMarker.interval)
             {
-              mt1 = lines[l].Start.t - lines[l].LineWidth * 8;
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 4;
               mx1 = x;
               
-              mt2 = lines[l].Start.t + lines[l].LineWidth * 8;
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 4;
               mx2 = x;
               
               ctx.moveTo(mx1, mt1);
@@ -1238,10 +1169,10 @@
             
             for (var x = 0; x >= lines[l].Start.x + coords.border; x -= lines[l].TimeMarker.interval)
             {
-              mt1 = lines[l].Start.t - lines[l].LineWidth * 8;
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 4;
               mx1 = x;
               
-              mt2 = lines[l].Start.t + lines[l].LineWidth * 8;
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 4;
               mx2 = x;
               
               ctx.moveTo(mx1, mt1);
@@ -1274,10 +1205,10 @@
                 else if (!isFinite(vel))
                 {
                   mt1 = t;
-                  mx1 = lines[l].Start.x - lines[l].LineWidth * 8;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 4;
                   
                   mt2 = t;
-                  mx2 = lines[l].Start.x + lines[l].LineWidth * 8;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 4;
                 }
                 
                 ctx.moveTo(mx1, mt1);
@@ -1319,10 +1250,10 @@
           {
             for (var x = lines[l].Start.x/*0*/; x <= lines[l].End.x - coords.border; x += lines[l].TimeMarker.interval)
             {
-              mt1 = lines[l].Start.t - lines[l].LineWidth * 8;
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 4;
               mx1 = x;
               
-              mt2 = lines[l].Start.t + lines[l].LineWidth * 8;
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 4;
               mx2 = x;
               
               ctx.moveTo(mx1, mt1);
@@ -1456,18 +1387,7 @@
         for (var l in animated)
         {
           var vel = (animated[l].End.t - animated[l].Start.t) / (animated[l].End.x - animated[l].Start.x);
-          if (!isFinite(vel))
-          {
-            x[l] = animated[l].Start.x;
-          }
-          else if (vel == 0)
-          {
-            x[l] = animated[l].Start.x + t;
-          }
-          else
-          {
-            x[l] = animated[l].Start.x - (animated[l].Start.t / vel) + (t / vel);
-          }
+          x[l] = animated[l].Start.x - (animated[l].Start.t / vel) + (t / vel);
         }
         axo = min.x;
         ctx.fillStyle = "#FFFFFF";
@@ -1537,18 +1457,15 @@
         
         ctx.beginPath();
         ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 5;
-        ctx.moveTo(min.x, 700);
+        ctx.lineWidth = 1;
+        ctx.moveTo(0, 700);
         for (var mark = min.x; mark <= canvas.width; mark += scale)
         {
-          ctx.lineTo(mark, 700);
-          ctx.lineTo(mark, 675);
-          ctx.lineTo(mark, 725);
-          ctx.lineTo(mark, 700);
+          ctx.lineTo(mark, 700, 1, 0, 2 * Math.PI, false);
+          ctx.lineTo(mark, 675, 1, 0, 2 * Math.PI, false);
+          ctx.lineTo(mark, 725, 1, 0, 2 * Math.PI, false);
+          ctx.lineTo(mark, 700, 1, 0, 2 * Math.PI, false);
         }
-        ctx.stroke();
-        ctx.moveTo(0, 700);
-        ctx.lineTo(0, 0);
         ctx.stroke();
         ctx.closePath();
         

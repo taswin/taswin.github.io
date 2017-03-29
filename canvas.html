@@ -1,236 +1,1611 @@
 <!DOCTYPE html>
 <html>
-<body onresize="resize()">
-  <canvas id="canvas" width=820px height=430px></canvas>
-  <canvas id="canvas_b" width=10000px height=10000px></canvas>
-</body>
-
-<div id="objects"><span>
- <button onclick="draw(false)">Draw</button> <button onclick="draw(true)">Animate</button>
- <br>
- Light speed: <input type="text" name="lightm" maxLength=5  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">m / <input type="text" name="lights" maxLength=5  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">s
- <br>
- <h><input type="checkbox" onclick="showHide(this, 'div')" checked><h1 name="obj">1</h1>
- <div name="object" class="obj"><span>
-  <h>Emits light:
-  <input type="checkbox" name="emitsLight" onclick="if(this.checked){this.parentNode.getElementsByTagName('div')[0].getElementsByTagName('input')[0].style.display='block';}else{this.parentNode.getElementsByTagName('div')[0].getElementsByTagName('input')[0].style.display='none';}" checked>
-  <div name="observer">
-   Observer: <input type="number" name="obs" min=0 value=0></input>
-  </div></h>
-  Start:
-  <br>
-  X: <input type="text" name="startX" maxLength=5  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="0">
-  Y: <input type="text" name="startY" maxLength=5  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="0">
-  <br>
-  <h><input type="checkbox" onclick="showHide(this, 'div')" checked><h2 name="stg">a</h2>
-  <div name="stage"  class="stg">
-   Velocity: <input type="text" name="velm" maxLength=5  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="1">m / <input type="text" name="vels" maxLength=5  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="2">s
-   <br>
-   Colour: <input type="text" name="colour" maxlength=6  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.charCode >= 65 && event.charCode <= 70) || (event.charCode >= 97 && event.charCode <= 102)" value="000000"> RGB (Hex)
-   <br>
-   Time of velocity change: <input type="text" name="velChange" maxLength=5  onkeypress="(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45" value="200">s
-  </div></h>
-  </span><button onclick="addStage(this)" id="addStage">Add stage</button>
- </div></h>
- </span><button onclick="addObject(this);" id="addObject">Add object</button>
-</div>
-
-<style>
-canvas 
-{
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: block;
-  border: #666 1px solid;
-}
-#canvas_b
-{
-  display: none;
-}
-html, body 
-{
-  width:  100%;
-  height: 100%;
-  margin: 0px;
-  overflow: hidden;
-}
-div
-{
-  padding-left: 10px;
-  border-left: #FF0000 1px solid;
-}
-h1,h2
-{
-  display: inline-block;
-  font-size: 1em;
-  margin: 0;
-  font-weight: normal;
-}
-#objects 
-{
-  width: 250px;
-  height: 400px;
-  overflow: auto;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 10px;
-  display: none;
-  display: block;
-  border: #666 1px solid;
-}
-input[name=lightm],input[name=lights],input[name=startX],input[name=startY],input[name=velm],input[name=vels],input[name=velChange]
-{
-  width: 35px;
-}
-input[name=obs]
-{
-  width: 50px;
-}
-input[name=colour]
-{
-  width: 50px;
-}
-</style>
-
-<script>
-var ctx, ctx_b, canvas, canvas_b;
-var width;
-var height;
-var max = 
-{
-  x: 0,
-  y: 0
-};
-var min = 
-{
-  x: 0,
-  y: 0
-};
-t = {
- obj: [1],
- stg: [1],
-}
-var stageStr = "<h><input type=\"checkbox\" onclick=\"showHide(this, 'div')\" checked><h2 name=\"stg\">{stg}<\/h2><div name=\"stage\"  class=\"stg\">Velocity: <input type=\"text\" name=\"velm\" maxLength=5  onkeypress=\"return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45\" value=\"1\">m \/ <input type=\"text\" name=\"vels\" maxLength=5  onkeypress=\"return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45\" value=\"2\">s\<br>Colour: <input type=\"text\" name=\"colour\" maxlength=6  onkeypress=\"return (event.charCode >= 48 && event.charCode <= 57) || (event.charCode >= 65 && event.charCode <= 70) || (event.charCode >= 97 && event.charCode <= 102)\" value=\"000000\"> RGB (Hex)<br>Time of velocity change: <input type=\"text\" name=\"velChange\" maxLength=5  onkeypress=\"(return event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45\" value=\"200\">s<br>{rem}<\/div><\/h>";
-var objectStr = "<h><input type=\"checkbox\" onclick=\"showHide(this, 'div')\" checked><h1 name=\"obj\">{obj}<\/h1><div name=\"object\" class=\"obj\"><span><h>Emits light:<input type=\"checkbox\" name=\"emitsLight\" onclick=\"if(this.checked){this.parentNode.getElementsByTagName('div')[0].getElementsByTagName('input')[0].style.display='block';}else{this.parentNode.getElementsByTagName('div')[0].getElementsByTagName('input')[0].style.display='none';}\" checked><div name=\"observer\">Observer: <input type=\"number\" name=\"obs\" min=0 value=0><\/input><\/div><\/h>Start:<br>X: <input type=\"text\" name=\"startX\" maxLength=5  onkeypress=\"return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45\" value=\"0\">Y: <input type=\"text\" name=\"startY\" maxLength=5  onkeypress=\"return (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 45\" value=\"0\"><br>"+stageStr+"<\/span><button onclick=\"addStage(this)\" id=\"addStage\">Add stage<\/button><br><button onclick=\"removeParent(this)\">Remove object<\/button><\/div><\/h>";
-
-resize();
-function resize()
-{
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext('2d');
+<meta charset="utf-8"/>
+  <body onload="draw();" onresize="draw();">
+    <div class="cc">
+      Barn v3.4
+      <div class="c1">
+        <canvas width=1000px height=1000px></canvas>
+      </div>
+      
+      <div class="c2">
+        <canvas width=1000px height=1000px></canvas>
+      </div>
+      
+      <div class="c3">
+        <canvas width=1000px height=750px></canvas>
+      </div>
+    </div>
+  </body>
   
-  canvas_b = document.getElementById('canvas_b');
-  ctx_b = canvas_b.getContext('2d');
+  <div id="buttons">
+    <button onclick="draw();">Draw</button>
+    <button onclick="if(confirm('Clear diagram and delete all WorldLine information?')){clearCanvas(document.getElementsByTagName('canvas')[0]); clearCanvas(document.getElementsByTagName('canvas')[1]);while (worldLine.count > 0){removeWorldLine(document.getElementsByClassName('remove')[0]);}draw();}">Clear</button>
+    <button id="hyperbola" onclick="if(h){hyperbola(document.getElementsByTagName('canvas')[0]);}else{draw();} h = !h">Simultaneity Contour</button>
+    <br>
+    <button onclick="saveConfig(prompt('Enter file name:', 'Relativity'));">Save config</button>
+    <button onclick="saveCanvas(prompt('Enter file name:', 'Relativity'));">Save diagram</button>
+    <br>
+    <input type="file" id="load" onchange="load(this.files[0]);">
+    <br>
+    <button id="animate" onclick="animate_(frame_number);" class="hidden_">Animate</button>
+    <button id="restart" onclick="restart = true;" class="hidden">Restart</button>
+    <button id="pause" onclick="pause();" class="hidden">Pause</button>
+    <button id="resume" onclick="resume();" class="hidden">Resume</button>
+    <button id="stop" onclick="stop();" class="hidden">Stop</button>
+  </div>
   
-  canvas.width  = window.innerWidth - 300;
-  canvas.height = window.innerHeight -20;
+  <div id="worldLines">
+    <input type="text" id="none" onselect="lastSelected = this" class="hidden"></input>
+    <button id="addWorldLine" onclick="addWorldLine();">Add WorldLine</button>
+  </div>
   
-  width = canvas.width;
-  height = canvas.height;
-  
-  max.x = width / 2;
-  min.x = max.x - width;
-  max.y = height - 20;
-  min.y = max.y - height;
-  
-  ctx.drawImage(canvas_b, 0, 0, canvas_b.width, canvas_b.height, 0, 0, width, height);
-}
-
-function draw(animated)
-{
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext('2d');
-  
-  canvas_b = document.getElementById('canvas_b');
-  ctx_b = canvas_b.getContext('2d');
-  
-  width = canvas.width;
-  height = canvas.height;
-  
-  max.x = width / 2;
-  min.x = max.x - width;
-  max.y = height - 20;
-  min.y = max.y - height;
-  
-  //ctx.setTransform(1, 0, 0, -1, -min.x, max.y);
-  ctx.clearRect(min.x, min.y, max.x - min.x, max.y - min.y);
-  
-  ctx_b.setTransform(1, 0, 0, -1, canvas_b.width/2, canvas_b.height - 20);
-  ctx_b.clearRect(-canvas_b.width/2, canvas_b.height - 20, canvas_b.width, canvas_b.height);
-  
-  ctx_b.beginPath();
-  ctx_b.fillStyle = "#00FFFF";
-  ctx_b.fillRect(-canvas_b.width/2+10, -10, canvas_b.width-20, canvas_b.height-20);
-  ctx_b.closePath();
-  
-  ctx_b.beginPath();
-  ctx_b.fillStyle = "#00FF0F";
-  ctx_b.fillRect(-50, -10, 100, 100);
-  ctx_b.closePath();
-  
-  ctx.drawImage(canvas_b, 0, 0, canvas_b.width, canvas_b.height, 0, 0, width, height);
-}
-
-function addObject(e) 
-{
-  var objects = e.parentNode.getElementsByTagName("span")[0];
-  t.obj[0] += 1;
-  t.stg[t.obj[0]-1] = 1;
-  objects.innerHTML += format(objectStr, t.obj[0]-1).replace(/{rem}/g, "");
-}
-
-function addStage(e) 
-{
-  var num = e.parentNode.parentNode.getElementsByTagName("h1");num = num[num.length-1].innerHTML-1;
-  t.stg[num] += 1;
-  var object = e.parentNode.getElementsByTagName("span")[0];
-  object.innerHTML += format(stageStr, num).replace(/{rem}/g, "<button onclick=\"removeParent(this)\">Remove stage<\/button>");
-}
-
-function removeParent(e)
-{
-  var num = e.parentNode.parentNode.parentNode.parentNode.parentNode.getElementsByTagName("h1");num = num[num.length-1].innerHTML-1;
-  var type = e.parentNode.className;
-  var pars = e.parentNode.parentNode.parentNode;
-  e.parentNode.parentNode.remove();
-  
-  if (type == "stg")
-  {
-    t.stg[num] -= 1;
-    var stgs = pars.getElementsByTagName("h2");
-    for (var i = 0; i < stgs.length; i++)
+  <style>
+    html, body 
     {
-      stgs[i].innerHTML = 'abcdefghijklmnopqrstuvwxyz'[i];
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      overflow: hidden;
     }
-  }
-  else if (type == "obj")
-  {
-    t.obj[0] -= 1;
-    var objs = pars.getElementsByTagName("h1");
-    for (var i = 0; i < objs.length; i++)
+    
+    div
     {
-      objs[i].innerHTML = i+1;
+      padding: 0px;
+      padding-left: 10px;
+      /*border: #00FF00 1px solid;
+      border-left: #FF0000 1px solid;*/
     }
-  }
-}
+    
+    h1, h
+    {
+      display: inline-block;
+      font-size: 1em;
+      margin: 0;
+      font-weight: normal;
+    }
+    
+    .name
+    {
+      border: #FFFFFF;
+    }
+    
+    #pause, #resume, #stop
+    {
+      display: none;
+    }
+    
+    #buttons, #worldLines
+    {
+      width: 265px;
+      top: 10px;
+      bottom: 10px;
+      right: 10px;
+      position: absolute;
+      padding: 10px 10px;
+      border: #000000 1px solid;
+    }
+    
+    #buttons
+    {
+      height: 80px;
+      border-bottom: #FFFFFF 1px solid;
+    }
+    
+    #worldLines
+    {
+      top: 110px;
+      overflow-y: scroll;
+      border-top: #FFFFFF 1px solid;
+    }
+    
+    .worldLine
+    {
+      padding: 0px;
+    }
+    
+    .cc
+    {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      bottom: 10px;
+      right: 308px;
+      display: block;
+    }
+    
+    .c1, .c2
+    {
+      position: absolute;
+      top: 0px;
+      width: 100%;
+      height: 75%;
+      /*border: #FF0000 1px solid;*/
+    }
+    
+    .c3
+    {
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      width: 100%;
+      height: 25%;
+      /*border: #FF0000 1px solid;*/
+    }
+    
+    canvas
+    {
+      position: absolute;
+      top: 45%;
+      left: 45%;
+      transform: translate(-45%, -45%);
+      /*border: #00FF00 1px solid;*/
+    }
+    
+    .hidden
+    {
+      display: none;
+    }
+    
+    #load
+    {
+      /*content: "load";*/
+    }
+    
+    button,#load
+    {
+      height: 22px;
+    }
+  </style>
+  
+  <script>
+    document.onkeypress = function(event)
+    {
+      //alert(event.keyCode);
+      if (event.keyCode == 13)
+      {
+        if (lastSelected != document.getElementById("none"))
+        {
+          update(lastSelected);
+          document.getElementById("none").select();
+        }
+        draw();
+      }
+    };
+    
+    function draw()
+    {
+      frame_number = -1;
+      
+      var lines = getLines();
+      var canvas = document.getElementsByTagName("canvas")[0];
+      
+      var c1 = document.getElementsByClassName("c1")[0];
+      var c2 = document.getElementsByClassName("c2")[0];
+      
+      c1.style.width = "100%";
+      c1.style.left = "0px";
+      
+      c2.style.width = "0%";
+      c2.style.right = "0px";
+      c2.style.display = "none";
+      
+      lines = scale(canvas, lines);
+      clearCanvas(canvas);
+      drawLines(canvas, lines[1], lines[0]);
+    }
+    
+    function clearCanvas(canvas)
+    {
+      var ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(min.x, min.t, canvas.width, canvas.height);
+    }
+    
+    function cmd_animate(frame)
+    {
+      animate_(frame);
+    }
+    
+    function animate_(frame)
+    {
+      stop();
+      
+      animating = true;
+      paused = false;
+      
+      document.getElementById("animate").style.display = "none";
+      document.getElementById("restart").style.display = "inline-block";
+      document.getElementById("pause").style.display = "inline-block";
+      document.getElementById("resume").style.display = "none";
+      document.getElementById("stop").style.display = "inline-block";
+      
+      var canvas = document.getElementsByTagName("canvas")[2];
+      var ctx = canvas.getContext('2d');
+      
+      var scale = 250;
+      
+      var lines = getLines();
+      var animated = getAnimated(lines);
+      
+      frames = ["BFO", "BFC", "BBO", "BBC", "PF", "PB"];
+      if (frame > -1)
+      {
+        animated = transformAnimated(animated, frames[frame]);
+      }
+      
+      if (animated == "break")
+      {
+        stop();
+        return;
+      }
+      
+      var points =
+      {
+        x: [],
+        t: []
+      }
+      
+      var p = 0;
+      for (var l in animated)
+      {
+        points.x[p] = animated[l].Start.x;
+        points.t[p] = animated[l].Start.t;
+        
+        points.x[p + 1] = animated[l].End.x;
+        points.t[p + 1] = animated[l].End.t;
+        p += 2;
+      }
+      
+      var x =
+      {
+        min: Math.min(...points.x),
+        max: Math.max(...points.x),
+        range: Math.max(...points.x) - Math.min(...points.x),
+        current:
+        {
+          BFO: 0,
+          BFC: 0,
+          BBO: 0,
+          BBC: 0,
+          PF: 0,
+          PB: 0
+        }
+      };
+      
+      var t =
+      {
+        min: Math.min(...points.t),
+        max: Math.max(...points.t),
+        range: Math.max(...points.t) - Math.min(...points.t),
+        current: 0
+      };
+      
+      canvas.width = x.range * scale;
+      canvas.height = 750;
+      canvas.style.width = '100%';
+      canvas.style.height = '75%';
+      
+      ctx.setTransform(1, 0, 0, 1, -x.min * scale, 0);
+      
+      drawAnimation(t.min, t.max, animated, canvas, scale, frame, {x: x.min * scale, t: t.min * scale});
+    }
+    
+    function pause()
+    {
+      paused = true;
+      document.getElementById("pause").style.display = "none";
+      document.getElementById("resume").style.display = "inline-block";
+    }
+    
+    function resume()
+    {
+      paused = false;
+      document.getElementById("pause").style.display = "inline-block";
+      document.getElementById("resume").style.display = "none";
+    }
+    
+    function stop()
+    {
+      animating = false;
+      
+      var canvas = document.getElementsByTagName("canvas")[2];
+      var ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = "#FFFFFF";
+      canvas.style.width = '100%';
+      canvas.style.height = '75%';
+      ctx.fillRect(axo, 0, canvas.width, canvas.height);
+      
+      for (a in animation)
+      {
+        clearTimeout(animation[a]);
+      }
+      animation = [];
+      
+      document.getElementById("animate").style.display = "inline-block";
+      document.getElementById("restart").style.display = "none";
+      document.getElementById("pause").style.display = "none";
+      document.getElementById("resume").style.display = "none";
+      document.getElementById("stop").style.display = "none";
+      var frame = frame_number;
+      draw();
+      frame_number = frame;
+      if (frame > -1) transformTo(document.getElementsByClassName("transform")[frame]);
+    }
+    
+    function saveConfig(name)
+    {
+      var content = getLines();
+      
+      var textToSave = JSON.stringify(content, null, "\t");
+      var textToSaveAsBlob = new Blob([textToSave], {type:"application/json"});
+      var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
 
-function format(str, stgNum)
-{
-  return str.replace(/{obj}/g, t.obj[0]).replace(/{stg}/g, 'abcdefghijklmnopqrstuvwxyz'[t.stg[stgNum]-1]);
-}
-
-function showHide(e, sh)
-{
-  if(e.checked)
-  {
-    e.parentNode.getElementsByTagName(sh)[0].style.display='block';
-  }
-  else
-  {
-    e.parentNode.getElementsByTagName(sh)[0].style.display='none';
-  }
-}
-</script>
+      var dJson = document.createElement("a");
+      dJson.download = name + ".json";
+      dJson.innerHTML = "Download File";
+      dJson.href = textToSaveAsURL;
+      dJson.onclick = function()
+      {
+        document.body.removeChild(event.target);
+      };
+      dJson.style.display = "none";
+      document.body.appendChild(dJson);
+      dJson.click();
+    }
+    
+    function saveCanvas(name)
+    {
+      var canvas = document.getElementsByTagName("canvas")[0];
+      
+      var dJpg = document.createElement("a");
+      dJpg.download = name + ".jpg";
+      dJpg.innerHTML = "Download File";
+      //dJpg.href = canvas.toDataURL('image/jpg');
+      dJpg.onclick = function()
+      {
+        dJpg.href = canvas.toDataURL('image/jpg');
+        document.body.removeChild(event.target);
+      };
+      dJpg.style.display = "none";
+      document.body.appendChild(dJpg);
+      dJpg.click();
+    }
+    
+    function load(file)
+    {
+      var fileReader = new FileReader();
+      
+      fileReader.onload = function(fileLoadedEvent)
+      {
+        var lines = JSON.parse(fileLoadedEvent.target.result);
+        
+        while(worldLine.count != lines.length)
+        {
+          if (worldLine.count < lines.length)
+          {
+            addWorldLine();
+          }
+        
+          if (worldLine.count > lines.length)
+          {
+            removeWorldLine(document.getElementsByClassName("remove")[0]);
+          }
+        }
+        
+        for (var l = 0; l < lines.length; l++)
+        { 
+          var line = document.getElementsByClassName("worldLine")[l];
+          
+          document.getElementsByClassName("name")[l].value = lines[l].Name;
+          document.getElementsByClassName("animated")[l].checked = lines[l].Animated;
+          document.getElementsByClassName("startX")[l].value = lines[l].Start.x;
+          document.getElementsByClassName("startT")[l].value = lines[l].Start.t;
+          document.getElementsByClassName("endX")[l].innerHTML = lines[l].End.x;
+          document.getElementsByClassName("endT")[l].innerHTML = lines[l].End.t;
+          document.getElementsByClassName("velocity")[l].value = lines[l].Velocity;
+          document.getElementsByClassName("distance")[l].value = lines[l].Distance;
+          document.getElementsByClassName("duration")[l].value = lines[l].Duration;
+          document.getElementsByClassName("colour")[l].value = lines[l].Colour;
+          document.getElementsByClassName("width")[l].value = lines[l].LineWidth;
+          document.getElementsByClassName("hasMarker")[l].checked = lines[l].TimeMarker.marked;
+          document.getElementsByClassName("markerInterval")[l].value = lines[l].TimeMarker.interval;
+          document.getElementsByClassName("hasSimultaneityLine")[l].value = lines[l].TimeMarker.simultaneityLine;
+          document.getElementsByClassName("hasHashing")[l].checked = lines[l].Hashing;
+          
+          if (lines[l].TimeMarker.marked)
+          {
+            showHide(document.getElementsByClassName("hasMarker")[l]);
+          }
+          
+        }
+        
+        draw();
+      }
+      fileReader.readAsText(file, "UTF-8");
+    }
+    
+    function showHide(e)
+    {
+      if(e.checked)
+      {
+        e.parentNode.getElementsByTagName("div")[0].style.display='block';
+      }
+      else
+      {
+        e.parentNode.getElementsByTagName("div")[0].style.display='none';
+      }
+    }
+    
+    function addWorldLine()
+    {
+      worldLine.count++;
+      
+      var newWorldLine = document.createElement("div");
+      newWorldLine.className = "worldLine";
+      newWorldLine.innerHTML = worldLine.html.replace("{WL}", worldLine.count);
+      
+      var worldLines = document.getElementById("worldLines");
+      var addWorldLine = document.getElementById("addWorldLine");
+      
+      worldLines.insertBefore(newWorldLine, addWorldLine);
+    }
+    
+    function removeWorldLine(e)
+    {
+      worldLine.count--;
+      
+      e.parentNode.parentNode.parentNode.remove();
+      
+      for (var l = 0; l < worldLine.count; l++)
+      {
+        document.getElementsByTagName("h1")[l].innerHTML = l + 1;
+      }
+    }
+    
+    function update(e)
+    {
+      var l = e.parentNode.parentNode.parentNode.getElementsByTagName("h1")[0].innerHTML - 1;
+      
+      var startX = parseFloat(document.getElementsByClassName("startX")[l].value);
+      var startT = parseFloat(document.getElementsByClassName("startT")[l].value);
+      var endX = parseFloat(document.getElementsByClassName("endX")[l].innerHTML);
+      var endT = parseFloat(document.getElementsByClassName("endT")[l].innerHTML);
+      var velocity = parseFloat(document.getElementsByClassName("velocity")[l].value);
+      var distance = parseFloat(document.getElementsByClassName("distance")[l].value);
+      var duration = parseFloat(document.getElementsByClassName("duration")[l].value);
+      
+      var updated = e.className;
+      switch (updated)
+      {
+        case "velocity":
+          if (lastUpdated == "duration")
+          {
+            distance = Math.abs(velocity * duration);
+          }
+          else
+          {
+            duration = Math.abs(distance / velocity);
+            if (!isFinite(duration)) duration = 0;
+          }
+          if (velocity < 0 && duration >= 0 && distance >= 0)
+          {
+            distance *= -1;
+          }
+          break;
+          
+        case "distance":
+          var d = 1;
+          duration = Math.abs(distance / velocity);
+          if (!isFinite(duration)) duration = 0;
+          if (velocity < 0 && d >= 0 && distance >= 0)
+          {
+            distance *= -1;
+          }
+          lastUpdated = "distance";
+          break;
+          
+        case "duration":
+          distance = velocity * duration;
+          lastUpdated = "duration";
+          break;
+      }
+      
+      endT = startT + duration;
+      endX = startX + distance;
+      
+      document.getElementsByClassName("startX")[l].value = startX;
+      document.getElementsByClassName("startT")[l].value = startT;
+      document.getElementsByClassName("endX")[l].innerHTML = endX;
+      document.getElementsByClassName("endT")[l].innerHTML = endT;
+      document.getElementsByClassName("velocity")[l].value = velocity;
+      document.getElementsByClassName("distance")[l].value = distance;
+      document.getElementsByClassName("duration")[l].value = duration;
+    }
+    
+    function transformTo(e)
+    {
+      f = parseInt(e.parentNode.parentNode.getElementsByClassName("wl")[0].innerHTML) - 1;
+      frame_number = f;
+      var lines = getLines();
+      
+      var canvas = document.getElementsByTagName("canvas")[0];
+      var canvasTransformed = document.getElementsByTagName("canvas")[1];
+      
+      var c1 = document.getElementsByClassName("c1")[0];
+      var c2 = document.getElementsByClassName("c2")[0];
+      
+      var transformedLines = JSON.parse(JSON.stringify(lines));
+      for (var l = 0; l < worldLine.count; l++)
+      {
+        var v = lines[f].Velocity;
+        var g = 1 / Math.sqrt(1 - Math.pow(v, 2));
+        
+        var v1 = (lines[l].Velocity - lines[f].Velocity) / (1 - (lines[l].Velocity * lines[f].Velocity));
+        var g1 = 1 / Math.sqrt(1 - Math.pow(v1, 2));
+        
+        //transformedLines[l] = lines[l];
+        
+        transformedLines[l].Start.x = g * (lines[l].Start.x - v * lines[l].Start.t);
+        transformedLines[l].Start.t = g * (lines[l].Start.t - v * lines[l].Start.x);
+        
+        transformedLines[l].End.x = g * (lines[l].End.x - v * lines[l].End.t);
+        transformedLines[l].End.t = g * (lines[l].End.t - v * lines[l].End.x);
+        
+        transformedLines[l].Velocity = v;
+        transformedLines[l].Distance = g * (lines[l].Distance - v * lines[l].Duration);
+        transformedLines[l].Duration = g * (lines[l].Duration - v * lines[l].Distance);
+        
+        transformedLines[l].TimeMarker.interval = g1;//lines[l].TimeMarker.interval * g;//TODO:TIMEMARKER_TRANSFORM
+        
+        //if (l == f) transformedLines[l].TimeMarker.interval = lines[f].TimeMarker.interval;
+      }
+      
+      var translate =
+      {
+        x: transformedLines[f].Start.x,
+        t: transformedLines[f].Start.t
+      };
+      
+      for (var l = 0; l < transformedLines.length; l++)
+      {
+        transformedLines[l].Start.x -= translate.x;
+        transformedLines[l].Start.t -= translate.t;
+        
+        transformedLines[l].End.x -= translate.x;
+        transformedLines[l].End.t -= translate.t;
+      }
+      
+      c1.style.width = "45%";
+      c1.style.left = "0px";
+      
+      c2.style.width = "45%";
+      c2.style.right = "0px";
+      c2.style.display = "inline-block";
+      
+      lines = scale(canvas, lines);
+      clearCanvas(canvas);
+      drawLines(canvas, lines[1], lines[0]);
+      
+      transformedLines = scale(canvasTransformed, transformedLines);
+      clearCanvas(canvasTransformed);
+      
+      //transformedLines[1][0].TimeMarker.interval = g * lines[1][0].TimeMarker.interval;
+      //transformedLines[1][1].TimeMarker.interval = lines[1][f].TimeMarker.interval;//g * lines[1][1].TimeMarker.interval;
+      
+      drawLines(canvasTransformed, transformedLines[1], transformedLines[0]);
+    }
+    
+    function transformAnimated(lines, frame)
+    {
+      var transformedLines = JSON.parse(JSON.stringify(lines));
+      for (var l in lines)
+      {
+        var v = (lines[frame].End.t - lines[frame].Start.t) / (lines[frame].End.x - lines[frame].Start.x);
+        var g = 1 / Math.sqrt(Math.abs(1 - Math.pow(v, 2)));
+        
+        transformedLines[l].Start.x = g * (lines[l].Start.x - v * lines[l].Start.t);
+        transformedLines[l].Start.t = g * (lines[l].Start.t - v * lines[l].Start.x);
+        
+        transformedLines[l].End.x = g * (lines[l].End.x - v * lines[l].End.t);
+        transformedLines[l].End.t = g * (lines[l].End.t - v * lines[l].End.x);
+      }
+      
+      var translate =
+      {
+        x: transformedLines[frame].Start.x,
+        t: transformedLines[frame].Start.t
+      };
+      
+      for (var l in transformedLines)
+      {
+        transformedLines[l].Start.x -= translate.x;
+        transformedLines[l].Start.t -= translate.t;
+        
+        transformedLines[l].End.x -= translate.x;
+        transformedLines[l].End.t -= translate.t;
+      }
+      
+      return transformedLines;
+    }
+    
+    function hyperbola(canvas)
+    {
+      ctx = canvas.getContext('2d');
+      
+      lines = getLines();
+      
+      ctx.beginPath();
+      ctx.strokeStyle = "#00FF00";
+      ctx.lineWidth = 2;
+      
+      for (var l = 0; l < lines.length; l++)
+      {
+        if (lines[l].TimeMarker.simultaneityLine)
+        {
+          var i = lines[l].TimeMarker.interval * s;
+          var st = lines[l].Start.t * s;
+          var et = lines[l].End.t * s;
+          var sx = lines[l].Start.x * s;
+          var ex = lines[l].End.x * s;
+          
+          for (var at = Math.max(0, st); at <= et; at += i)
+          {
+            ctx.moveTo(min.x, Math.sqrt(Math.pow(at, 2) + Math.pow(min.x, 2)));
+            
+            var vel = (et - st) / (ex - sx);
+            if (!isFinite(vel)) vel = 0;
+			
+            var lx = sx - (st / vel) + (at / vel);
+            
+            for (var x = min.x - lx; x <= max.x + lx; x++)
+            {
+              t = Math.sqrt(Math.pow(at, 2) + Math.pow(x - lx, 2));
+              ctx.lineTo(x, t);
+            }
+          }
+          
+          for (var at = Math.min(et, 0); at >= st; at -= i)
+          {
+            ctx.moveTo(min.x, -Math.sqrt(Math.pow(at, 2) + Math.pow(min.x, 2)));
+            
+            var vel = (et - st) / (ex - sx);
+            if (!isFinite(vel)) vel = 0;
+			
+            var lx = sx - (st / vel) + (at / vel);
+			
+            for (var x = min.x - lx; x <= max.x + lx; x++)
+            {
+              t = -Math.sqrt(Math.pow(at, 2) + Math.pow(x - lx, 2));
+              ctx.lineTo(x, t);
+            }
+          }
+        }
+      }
+      
+      ctx.stroke();
+      ctx.closePath();
+    }
+    
+    function checkChar(evt, charEx)
+    {
+      var theEvent = evt;
+      var key = theEvent.keyCode || theEvent.which;
+      var exclusions=[8,9,37,38,39,40];
+      
+      if(exclusions.indexOf(key)>-1) return;
+      key = String.fromCharCode(key);
+      
+      if(!charEx.test(key))
+      {
+        theEvent.returnValue = false;
+        if(theEvent.preventDefault) theEvent.preventDefault();
+      }
+    }
+    
+    //vars
+    var worldLine =
+    {
+      count: 0,
+      html: '\
+      <span>\
+        <input type="checkbox" onclick="showHide(this);" checked>World Line <h1 class="wl">{WL}</h1>: <input type="text" tag="name" size="10" class="name">\
+        <div>\
+          <h class="hidden">Animated: <input type="checkbox" class="animated"></h>\
+          '/*<br>*/+'\
+          Start:\
+          <div>\
+            x: <input type="text" class="startX" maxlength="5" onselect="lastSelected = this" onchange="update(this);" onkeypress="checkChar(event, /[0-9]|\\-|\\./);" size="5" value="0">\
+            <br>\
+            t: <input type="text" class="startT" maxlength="5" onselect="lastSelected = this" onchange="update(this);" onkeypress="checkChar(event, /[0-9]|\\-|\\./);" size="5" value="0">\
+          </div>\
+          End:\
+          <div>\
+            x: <h class="endX">0</h>\
+            <br>\
+            t: <h class="endT">0</h>\
+          </div>\
+          Velocity: <input type="text" class="velocity" maxlength="5" onselect="lastSelected = this" onchange="update(this);" onkeypress="checkChar(event, /[0-9]|\\-|\\./);" size="5" value="0">\
+          <div>\
+            Distance: <input type="text" class="distance" maxlength="5" onselect="lastSelected = this" onchange="update(this);" onkeypress="checkChar(event, /[0-9]|\\-|\\./);" size="5" value="0">\
+            <br>\
+            Duration: <input type="text" class="duration" maxlength="5" onselect="lastSelected = this" onchange="update(this);" onkeypress="checkChar(event, /[0-9]|\\-|\\./);" size="5" value="0">\
+          </div>\
+          Colour: <input type="color" class="colour"  value="#000000" style="width:85%;">\
+          <br>\
+          Line Width: <input type="text" class="width" maxlength="2" onselect="lastSelected = this" onkeypress="checkChar(event, /[0-9]|\\./);" size="2" value="1">\
+          <br>\
+          <h>\
+            Time marker: <input type="checkbox" class="hasMarker" onclick="showHide(this);">\
+            <div class="marker" style="display:none">\
+              Every: <input type="text" class="markerInterval" onkeypress="checkChar(event, /[0-9]|\\./);" size="5" value="1">\
+              <br>\
+              Simultaneity line: <input type="checkbox" class="hasSimultaneityLine">\
+            </div>\
+          </h>\
+          <br>\
+          Hashing: <input type="checkbox" class="hasHashing">\
+          <br>\
+          <button class="transform" onclick="transformTo(this);">Transform to this frame</button>\
+          <br>\
+          <br>\
+          <button class="remove" onclick="removeWorldLine(this);draw();">Remove WorldLine</button>\
+        </div>\
+        <br>\
+      </span>'
+    }
+    
+    var lastUpdated = "duration";
+    
+    document.getElementById("none").select();
+    var lastSelected = document.getElementById("none");
+    
+    var min =
+    {
+      x: 0,
+      t: 0
+    };
+    
+    var max =
+    {
+      x: 1000,
+      t: 1000
+    };
+    
+    var s = 1;
+    
+    var h = true;
+    
+    var animating = false;
+    var paused = false;
+    var restart = false;
+    var animation = [];
+    var axo = 0;
+    var frame_number = -1;
+    
+    //called
+    function getLines()
+    {
+      lines = [];
+      for (var l = 0; l < worldLine.count; l++)
+      {
+        var line = document.getElementsByClassName("worldLine")[l];
+        
+        lines[l] =
+        {
+          Name: line.getElementsByClassName("name")[0].value,
+          Animated: line.getElementsByClassName("animated")[0].checked,
+          Start:
+          {
+            x: parseFloat(line.getElementsByClassName("startX")[0].value),
+            t: parseFloat(line.getElementsByClassName("startT")[0].value)
+          },
+          End:
+          {
+            x: parseFloat(line.getElementsByClassName("endX")[0].innerHTML),
+            t: parseFloat(line.getElementsByClassName("endT")[0].innerHTML)
+          },
+          Velocity: parseFloat(line.getElementsByClassName("velocity")[0].value),
+          Distance: parseFloat(line.getElementsByClassName("distance")[0].value),
+          Duration: parseFloat(line.getElementsByClassName("duration")[0].value),
+          Colour: line.getElementsByClassName("colour")[0].value,
+          LineWidth: parseFloat(line.getElementsByClassName("width")[0].value),
+          TimeMarker:
+          {
+            marked: line.getElementsByClassName("hasMarker")[0].checked,
+            interval: parseFloat(line.getElementsByClassName("markerInterval")[0].value),
+            simultaneityLine: line.getElementsByClassName("hasSimultaneityLine")[0].checked
+          },
+          Hashing: line.getElementsByClassName("hasHashing")[0].checked,
+          Arrow: "none"//"middle"
+        };
+      }
+      
+      return lines;
+    }
+    
+    function getAnimated(lines)
+    {
+      var animated =
+      {
+        BFO: {},
+        BFC: {},
+        BBO: {},
+        BBC: {},
+        PF: {},
+        PB: {}
+      };
+      
+      var BFO = "BFO",
+        BFC = "BFC",
+        BBO = "BRO",
+        BBC = "BRC",
+        PF = "PL",
+        PB = "PT";
+      
+      for (var l = 0; l < lines.length; l++)
+      {
+        switch (lines[l].Name)
+        {
+          case BFO:
+            animated.BFO =
+            {
+              Name: lines[l].Name,
+              Start:
+              {
+                x: lines[l].Start.x,
+                t: lines[l].Start.t
+              },
+              End:
+              {
+                x: lines[l].End.x,
+                t: lines[l].End.t
+              }
+            };
+            break;
+          
+          case BFC:
+            animated.BFC = 
+            {
+              Name: lines[l].Name,
+              Start:
+              {
+                x: lines[l].Start.x,
+                t: lines[l].Start.t
+              },
+              End:
+              {
+                x: lines[l].End.x,
+                t: lines[l].End.t
+              }
+            };
+            break;
+          
+          case BBO:
+            animated.BBO =
+            {
+              Name: lines[l].Name,
+              Start:
+              {
+                x: lines[l].Start.x,
+                t: lines[l].Start.t
+              },
+              End:
+              {
+                x: lines[l].End.x,
+                t: lines[l].End.t
+              }
+            };
+            break;
+          
+          case BBC:
+            animated.BBC =
+            {
+              Name: lines[l].Name,
+              Start:
+              {
+                x: lines[l].Start.x,
+                t: lines[l].Start.t
+              },
+              End:
+              {
+                x: lines[l].End.x,
+                t: lines[l].End.t
+              }
+            };
+            break;
+          
+          case PF:
+            animated.PF =
+            {
+              Name: lines[l].Name,
+              Start:
+              {
+                x: lines[l].Start.x,
+                t: lines[l].Start.t
+              },
+              End:
+              {
+                x: lines[l].End.x,
+                t: lines[l].End.t
+              }
+            };
+            break;
+          
+          case PB:
+            animated.PB =
+            {
+              Name: lines[l].Name,
+              Start:
+              {
+                x: lines[l].Start.x,
+                t: lines[l].Start.t
+              },
+              End:
+              {
+                x: lines[l].End.x,
+                t: lines[l].End.t
+              }
+            };
+            break;
+        }
+      }
+      
+      var blank = [];
+      if (animated.BFO.Name != BFO)
+      {
+        blank.push(BFO);
+      }
+      if (animated.BFC.Name != BFC)
+      {
+        blank.push(BFC);
+      }
+      if (animated.BBO.Name != BBO)
+      {
+        blank.push(BBO);
+      }
+      if (animated.BBC.Name != BBC)
+      {
+        blank.push(BBC);
+      }
+      if (animated.PF.Name != PF)
+      {
+        blank.push(PF);
+      }
+      if (animated.PB.Name != PB)
+      {
+        blank.push(PB);
+      }
+      
+      if (blank.length > 0)
+      {
+        alert("You need world line(s) called: " + blank);
+        return "break";
+      }
+      
+      return animated;
+    }
+    
+    function scale(canvas, lines)
+    {
+      var ctx = canvas.getContext('2d');
+      
+      if (lines.length == 0) lines[0] = JSON.parse('{"Name": "","Animated": false,"Start": {"x": -20,"t": -20},"End":{"x": 20,"t": 20},"Velocity": 1,"Distance": 40,"Duration": 40,"Colour": "#FFFFFF","LineWidth": 1,"TimeMarker":{"marked": false,"interval": 1},"Hashing": false, "Arrow": "none"}');
+      
+      var points =
+      {
+        x: [],
+        t: []
+      };
+      
+      var p = 0;
+      for (var l = 0; l < lines.length; l++)
+      {
+        points.x[p] = lines[l].Start.x;
+        points.t[p] = lines[l].Start.t;
+        p++;
+        
+        points.x[p] = lines[l].End.x;
+        points.t[p] = lines[l].End.t;
+        p++
+      }
+      
+      var coords = 
+      {
+        min:
+        {
+          x: Math.min(...points.x),
+          t: Math.min(...points.t)
+        },
+        max:
+        {
+          x: Math.max(...points.x),
+          t: Math.max(...points.t)
+        },
+        range:
+        {
+          x: 0,
+          t: 0
+        },
+        border: 20,
+        scale: 0
+      };
+      
+      coords.range.x = coords.max.x - coords.min.x;
+      coords.range.t = coords.max.t - coords.min.t;
+      
+      coords.scale = 1000 / Math.max(coords.range.x, coords.range.t);
+      
+      coords.min.t *= coords.scale;
+      coords.min.x *= coords.scale;
+      
+      coords.max.t *= coords.scale;
+      coords.max.x *= coords.scale;
+      
+      coords.range.t *= coords.scale;
+      coords.range.x *= coords.scale;
+      
+      var scale = Math.min(((window.innerWidth - 308) * 0.9) / 1000, ((window.innerHeight * 0.9) * 0.75) / 1000);
+      
+      canvas.width = coords.range.x + 2 * coords.border;
+      canvas.height = coords.range.t + 2 * coords.border;
+      
+      canvas.style.width = ((0.9 * scale) * canvas.width) + "px";
+      canvas.style.height = ((0.9 * scale) * canvas.height) + "px";
+      
+      ctx.setTransform(1, 0, 0, -1, -coords.min.x + coords.border, canvas.height + coords.min.t - coords.border);
+      
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(coords.min.x - coords.border, coords.min.t - coords.border, canvas.width, canvas.height);
+      
+      for (var l = 0; l < lines.length; l++)
+      {
+        lines[l].Start.x *= coords.scale;
+        lines[l].Start.t *= coords.scale;
+        
+        lines[l].End.x *= coords.scale;
+        lines[l].End.t *= coords.scale;
+        
+        lines[l].Distance *= coords.scale;
+        lines[l].Duration *= coords.scale;
+        
+        lines[l].TimeMarker.interval *= coords.scale;
+      }
+      
+      var tInterval = 1 * coords.scale;
+      var xInterval = 1 * coords.scale;
+      var worldLines = [{Name: "t", Animated: false, Start:{x: 0, t: coords.min.t - coords.border}, End:{x: 0,t: coords.max.t + coords.border}, Colour: "#0000FF", LineWidth: 1, TimeMarker:{marked: true, interval: tInterval}, Hashing: false, Arrow: "end"},{Name: "x", Animated: false, Start:{x: coords.min.x - coords.border, t: 0}, End:{x: coords.max.x + coords.border, t: 0}, Colour: "#0000FF", LineWidth: 1, TimeMarker:{marked: true, interval: xInterval}, Hashing: false, Arrow: "end"}];
+      
+      for (var l = 0; l < lines.length; l++)
+      {
+        worldLines[l + 2] = lines[l];
+      }
+      
+      min.x = coords.min.x - coords.border;
+      min.t = coords.min.t - coords.border;
+      
+      max.x = coords.max.x + coords.border;
+      max.t = coords.max.t + coords.border;
+      
+      s = coords.scale;
+      
+      return [coords, worldLines];
+    }
+    
+    function drawLines(canvas, lines, coords)
+    {
+      var ctx = canvas.getContext('2d');
+      
+      for (var l = 0; l < lines.length; l++)
+      {
+        ctx.beginPath();
+        ctx.strokeStyle = lines[l].Colour;
+        ctx.lineWidth = lines[l].LineWidth * 2;
+        ctx.moveTo(lines[l].Start.x, lines[l].Start.t);
+        ctx.lineTo(lines[l].End.x, lines[l].End.t);
+        
+        if (lines[l].Hashing)
+        {
+          var vel = (lines[l].End.t - lines[l].Start.t) / (lines[l].End.x - lines[l].Start.x);
+          var mt1, mx1, mt2, mx2;
+          
+          if (vel != 0)
+          {
+            for (var t = lines[l].Start.t; t <= lines[l].End.t; t += lines[l].LineWidth * 10)
+            {
+              var x = lines[l].Start.x - (lines[l].Start.t / vel) + (t / vel);
+              
+              if (isFinite(vel))
+              {
+                var mv = -1 / vel;
+                
+                mt1 = t - lines[l].LineWidth * 2;
+                mx1 = x - (t / mv) + (mt1 / mv);
+                
+                mt2 = t + lines[l].LineWidth * 2;
+                mx2 = x - (t / mv) + (mt2 / mv);
+              }
+              else if (!isFinite(vel))
+              {
+                mt1 = t;
+                mx1 = lines[l].Start.x - lines[l].LineWidth * 4;
+                
+                mt2 = t;
+                mx2 = lines[l].Start.x + lines[l].LineWidth * 4;
+              }
+              
+              ctx.moveTo(mx1, mt1);
+              ctx.lineTo(mx2, mt2);
+            }
+          }
+          else if (vel == 0)
+          {
+            for (var x = lines[l].Start.x; x <= lines[l].End.x; x += lines[l].LineWidth * 10)
+            {
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 4;
+              mx1 = x;
+              
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 4;
+              mx2 = x;
+              
+              ctx.moveTo(mx1, mt1);
+              ctx.lineTo(mx2, mt2);
+            }
+          }
+        }
+        
+        if (lines[l].TimeMarker.marked && lines[l].Arrow == "end")
+        {
+          var vel = (lines[l].End.t - lines[l].Start.t) / (lines[l].End.x - lines[l].Start.x);
+          var mt1, mx1, mt2, mx2;
+          
+          if (vel != 0)
+          {
+            for (var t = 0; t <= lines[l].End.t; t += lines[l].TimeMarker.interval)
+            {
+              if (t >= lines[l].Start.t)
+              {
+                if (isFinite(vel))
+                {
+                  var x = lines[l].Start.x - (lines[l].Start.t / vel) + (t / vel);
+                  var mv = -1 / vel;
+                  
+                  mt1 = t - lines[l].LineWidth * 4;
+                  mx1 = x - (t / mv) + (mt1 / mv);
+                  
+                  mt2 = t + lines[l].LineWidth * 4;
+                  mx2 = x - (t / mv) + (mt2 / mv);
+                }
+                else if (!isFinite(vel))
+                {
+                  mt1 = t;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 8;
+                  
+                  mt2 = t;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 8;
+                }
+                
+                ctx.moveTo(mx1, mt1);
+                ctx.lineTo(mx2, mt2);
+              }
+            }
+            
+            for (var t = 0; t >= lines[l].Start.t; t -= lines[l].TimeMarker.interval)
+            {
+              if (t <= lines[l].End.t)
+              {
+                var x = lines[l].Start.x - (lines[l].Start.t / vel) + (t / vel);
+                
+                if (isFinite(vel))
+                {
+                  var mv = -1 / vel;
+                  
+                  mt1 = t - lines[l].LineWidth * 4;
+                  mx1 = x - (t / mv) + (mt1 / mv);
+                  
+                  mt2 = t + lines[l].LineWidth * 4;
+                  mx2 = x - (t / mv) + (mt2 / mv);
+                }
+                else if (!isFinite(vel))
+                {
+                  mt1 = t;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 8;
+                  
+                  mt2 = t;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 8;
+                }
+                
+                ctx.moveTo(mx1, mt1);
+                ctx.lineTo(mx2, mt2);
+              }
+            }
+          }
+          else if (vel == 0)
+          {
+            for (var x = 0; x <= lines[l].End.x - coords.border; x += lines[l].TimeMarker.interval)
+            {
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 8;
+              mx1 = x;
+              
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 8;
+              mx2 = x;
+              
+              ctx.moveTo(mx1, mt1);
+              ctx.lineTo(mx2, mt2);
+            }
+            
+            for (var x = 0; x >= lines[l].Start.x + coords.border; x -= lines[l].TimeMarker.interval)
+            {
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 8;
+              mx1 = x;
+              
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 8;
+              mx2 = x;
+              
+              ctx.moveTo(mx1, mt1);
+              ctx.lineTo(mx2, mt2);
+            }
+          }
+        }
+        else if (lines[l].TimeMarker.marked && lines[l].Arrow != "end")
+        {
+          var vel = (lines[l].End.t - lines[l].Start.t) / (lines[l].End.x - lines[l].Start.x);
+          var mt1, mx1, mt2, mx2;
+          
+          if (vel != 0)
+          {
+            for (var t = lines[l].Start.t/*0*/; t <= lines[l].End.t; t += lines[l].TimeMarker.interval)
+            {/*
+              if (t >= lines[l].Start.t)
+              {*/
+                if (isFinite(vel))
+                {
+                  var x = lines[l].Start.x - (lines[l].Start.t / vel) + (t / vel);
+                  var mv = -1 / vel;
+                  
+                  mt1 = t - lines[l].LineWidth * 4;
+                  mx1 = x - (t / mv) + (mt1 / mv);
+                  
+                  mt2 = t + lines[l].LineWidth * 4;
+                  mx2 = x - (t / mv) + (mt2 / mv);
+                }
+                else if (!isFinite(vel))
+                {
+                  mt1 = t;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 8;
+                  
+                  mt2 = t;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 8;
+                }
+                
+                ctx.moveTo(mx1, mt1);
+                ctx.lineTo(mx2, mt2);
+              }
+            /*}*/
+            /*
+            for (var t = 0; t >= lines[l].Start.t; t -= lines[l].TimeMarker.interval)
+            {
+              if (t <= lines[l].End.t)
+              {
+                var x = lines[l].Start.x - (lines[l].Start.t / vel) + (t / vel);
+                
+                if (isFinite(vel))
+                {
+                  var mv = -1 / vel;
+                  
+                  mt1 = t - lines[l].LineWidth * 4;
+                  mx1 = x - (t / mv) + (mt1 / mv);
+                  
+                  mt2 = t + lines[l].LineWidth * 4;
+                  mx2 = x - (t / mv) + (mt2 / mv);
+                }
+                else if (!isFinite(vel))
+                {
+                  mt1 = t;
+                  mx1 = lines[l].Start.x - lines[l].LineWidth * 4;
+                  
+                  mt2 = t;
+                  mx2 = lines[l].Start.x + lines[l].LineWidth * 4;
+                }
+                
+                ctx.moveTo(mx1, mt1);
+                ctx.lineTo(mx2, mt2);
+              }
+            }*/
+          }
+          else if (vel == 0)
+          {
+            for (var x = lines[l].Start.x/*0*/; x <= lines[l].End.x - coords.border; x += lines[l].TimeMarker.interval)
+            {
+              mt1 = lines[l].Start.t - lines[l].LineWidth * 8;
+              mx1 = x;
+              
+              mt2 = lines[l].Start.t + lines[l].LineWidth * 8;
+              mx2 = x;
+              
+              ctx.moveTo(mx1, mt1);
+              ctx.lineTo(mx2, mt2);
+            }
+            /*
+            for (var x = 0; x >= lines[l].Start.x + coords.border; x -= lines[l].TimeMarker.interval)
+            {
+              mt1 = 0 - lines[l].LineWidth * 4;
+              mx1 = x;
+              
+              mt2 = 0 + lines[l].LineWidth * 4;
+              mx2 = x;
+              
+              ctx.moveTo(mx1, mt1);
+              ctx.lineTo(mx2, mt2);
+            }*/
+          }
+        }
+        
+        ctx.stroke();
+        ctx.closePath();
+        
+        
+        if (lines[l].Arrow != "none")
+        {
+          ctx.beginPath();
+          ctx.strokeStyle = lines[l].Colour;
+          ctx.lineWidth = lines[l].LineWidth * 2;
+          ctx.moveTo(lines[l].Start.x, lines[l].Start.t);
+          ctx.lineTo(lines[l].End.x, lines[l].End.t);
+          
+          ctx.fillStyle = lines[l].Colour;
+          
+          var t, x;
+          var ts = lines[l].LineWidth * 8;
+          
+          switch (lines[l].Arrow)
+          {
+            case "end":
+              t = lines[l].End.t;
+              x = lines[l].End.x;
+              drawArrowHeads(ctx, t, x, lines[l], ts);
+              //TODO
+              t = lines[l].Start.t;
+              x = lines[l].Start.x;
+              drawArrowHeads(ctx, t, x, lines[l], ts);
+              break;
+            
+            case "middle":
+              t = (lines[l].End.t + lines[l].Start.t) / 2;
+              x = (lines[l].End.x + lines[l].Start.x) / 2;
+              drawArrowHeads(ctx, t, x, lines[l], ts);
+              break;
+          }
+          
+          ctx.stroke();
+          if (lines[l].Arrow == "end") ctx.fill()
+          ctx.closePath();
+        }
+        
+        /*ctx.beginPath();
+        ctx.font = "30px Comic Sans MS";
+        ctx.fillStyle = lines[l].Colour;
+        if (lines[l].Name == "t" || lines[l].Name == "x") ctx.fillText(lines[l].Name, lines[l].End.x + lines[l].LineWidth * 10, lines[l].End.t - lines[l].LineWidth * 10);
+        
+        ctx.closePath()*/
+      }
+    }
+    
+    function drawArrowHeads(ctx, t, x, line, ts)
+    {
+      var vel = (line.End.t - line.Start.t) / (line.End.x - line.Start.x);
+      var mt1, mx1, mt2, mx2;
+      
+      if (vel != 0)
+      {
+        var mt = t - ts;
+        
+        if (isFinite(vel))
+        {
+          var mx = x - (t / vel) + (mt / vel);
+          var mv = -1 / vel;
+          
+          mt1 = mt - ts;
+          mx1 = mx - (mt / mv) + (mt1 / mv);
+          
+          mt2 = mt + ts;
+          mx2 = mx - (mt / mv) + (mt2 / mv);
+        }
+        else if (!isFinite(vel))
+        {
+          mt1 = mt;
+          mx1 = x - ts;
+          
+          mt2 = mt;
+          mx2 = x + ts;
+        }
+      }
+      else if (vel == 0)
+      {
+        var mx = x - ts;
+        
+        mt1 = t - ts;
+        mx1 = mx;
+        
+        mt2 = t + ts;
+        mx2 = mx;
+      }
+      
+      ctx.moveTo(mx1, mt1);
+      ctx.lineTo(x, t);
+      ctx.lineTo(mx2, mt2);
+    }
+    
+    function drawAnimation(t, te, animated, canvas, scale, frame, min)
+    {
+      if (!paused)
+      {
+        var ctx = canvas.getContext('2d');
+        var x =
+        {
+          BFO: 0,
+          BFC: 0,
+          BBO: 0,
+          BBC: 0,
+          PF: 0,
+          PB: 0
+        };
+        
+        for (var l in animated)
+        {
+          var vel = (animated[l].End.t - animated[l].Start.t) / (animated[l].End.x - animated[l].Start.x);
+          if (!isFinite(vel))
+          {
+            x[l] = animated[l].Start.x;
+          }
+          else if (vel == 0)
+          {
+            x[l] = animated[l].Start.x + t;
+          }
+          else
+          {
+            x[l] = animated[l].Start.x - (animated[l].Start.t / vel) + (t / vel);
+          }
+        }
+        axo = min.x;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(min.x, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x.PB * scale, 300, (x.PF - x.PB) * scale, 150);
+        
+        var BF = "none";
+        if (t > animated.BFO.Start.t && t < animated.BFO.End.t) BF = "O";
+        if (t > animated.BFC.Start.t && t < animated.BFC.End.t) BF = "C";
+        
+        var BB = "none";
+        if (t > animated.BBO.Start.t && t < animated.BBO.End.t) BB = "O";
+        if (t > animated.BBC.Start.t && t < animated.BBC.End.t) BB = "C";
+        
+        ctx.beginPath();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 10;
+        
+        ctx.moveTo(x["BF" + BF] * scale, 200);
+        ctx.lineTo(x["BB" + BB] * scale, 200);
+        
+        ctx.moveTo(x["BF" + BF] * scale, 550);
+        ctx.lineTo(x["BB" + BB] * scale, 550);
+        
+        ctx.stroke();
+        ctx.closePath();
+        
+        ctx.beginPath();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1;
+        switch (BF)
+        {
+          case "O":
+            ctx.moveTo(x["BF" + BF] * scale, 0);
+            ctx.lineTo(x["BF" + BF] * scale, 275);
+            
+            ctx.moveTo(x["BF" + BF] * scale, 750);
+            ctx.lineTo(x["BF" + BF] * scale, 475);
+            break;
+            
+          case "C":
+            ctx.moveTo(x["BF" + BF] * scale, 200);
+            ctx.lineTo(x["BF" + BF] * scale, 550);
+            break;
+        }
+        
+        switch (BB)
+        {
+          case "O":
+            ctx.moveTo(x["BB" + BB] * scale, 0);
+            ctx.lineTo(x["BB" + BB] * scale, 275);
+            
+            ctx.moveTo(x["BB" + BB] * scale, 750);
+            ctx.lineTo(x["BB" + BB] * scale, 475);
+            break;
+            
+          case "C":
+            ctx.moveTo(x["BB" + BB] * scale, 200);
+            ctx.lineTo(x["BB" + BB] * scale, 550);
+            break;
+        }
+        
+        ctx.stroke();
+        ctx.closePath();
+        
+        ctx.beginPath();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 5;
+        ctx.moveTo(min.x, 700);
+        for (var mark = min.x; mark <= canvas.width; mark += scale)
+        {
+          ctx.lineTo(mark, 700);
+          ctx.lineTo(mark, 675);
+          ctx.lineTo(mark, 725);
+          ctx.lineTo(mark, 700);
+        }
+        ctx.stroke();
+        ctx.moveTo(0, 700);
+        ctx.lineTo(0, 0);
+        ctx.stroke();
+        ctx.closePath();
+        
+        draw();
+        
+        if (frame == -1)
+        {
+          var ctx1 = document.getElementsByTagName("canvas")[0].getContext('2d');
+          ctx1.beginPath();
+          ctx1.strokeStyle = "#00FF00";
+          for (a in x)
+          {
+            ctx1.arc(x[a] * s, t * s, 5, 0, 2 * Math.PI, false);
+          }
+          ctx1.stroke();
+          ctx1.closePath();
+        }
+        else
+        {
+          transformTo(document.getElementsByClassName("transform")[frame]);
+          
+          var ctx1 = document.getElementsByTagName("canvas")[1].getContext('2d');
+          ctx1.beginPath();
+          ctx1.strokeStyle = "#00FF00";
+          for (a in x)
+          {
+            ctx1.arc((x[a]) * s, t * s, 5, 0, 2 * Math.PI, false);
+          }
+          ctx1.stroke();
+          ctx1.closePath();
+        }
+      }
+      
+      if (t <= te)
+      {
+        animation.push(setTimeout(function()
+        {
+          if (restart)
+          {
+            restart = false;
+            resume();
+            drawAnimation(min.t / scale, te, animated, canvas, scale, frame, min);
+          }
+          else if (paused)
+          {
+            drawAnimation(t, te, animated, canvas, scale, frame, min);
+          }
+          else
+          {
+            drawAnimation(t + 0.01, te, animated, canvas, scale, frame, min);
+          }
+        }, 5));
+      }
+      else
+      {
+        stop();
+      }
+    }
+  </script
 </html>

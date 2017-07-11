@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <canvas id="canvas" width="144" height="144"></canvas>
+  <div id="images"></div>
+  <style>
+    #canvas
+    {
+      border:1px solid #000000;
+    }
+
+    #images
+    {
+      display: none;
+    }
+  </style>
+  <script>
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+
+    var diametre = 144;
+
+    var prefex = "http://taswin.github.io/minecraft/mod ideas/";
+    var images =
+    {
+      gui:
+      {
+        slot:
+        {
+          Empty_Slot: "Empty Slot",
+
+          Item_Slot: "Item Slot",
+          Item_Slot_Color: "Item Slot Color",
+
+          Machine_Slot: "Machine Slot",
+          Machine_Slot_Dirs: "Machine Slot Dirs",
+          Machine_Slot_Dirs_Red: "Machine Slot Dirs Red",
+          Machine_Slot_Dirs_Gray: "Machine Slot Dirs Gray",
+          Machine_Slot_Dirs_White: "Machine Slot Dirs White",
+          Machine_Slot_Dirs_Black: "Machine Slot Dirs Black",
+          Machine_Slot_Type: "Machine Slot Type"
+        }
+      },
+      items:
+      {
+        capsules:
+        {
+          tiny:
+          {
+            //todo
+          }
+        },
+        components:
+        {
+          cores:
+          {
+            //todo
+          }
+        }
+      }
+    };
+    var suffex = ".png";
+
+    var Images = traverse(images, "images/", {});
+
+    imgs = Object.values(Images);
+    for (var i in imgs)
+    {
+      var img = document.createElement("img");
+      img.src = prefex + imgs[i] + suffex;
+      if (i == imgs.length - 1)
+      {
+        img.onload = function() {loaded();};
+      }
+      document.getElementById("images").appendChild(img);
+    }
+
+    function loaded()
+    {
+      var toDraw =
+      [
+        [
+          [
+            {src: "Empty_Slot", x: 0, y: 0}
+          ],
+          [
+            {src: "Item_Slot", x: 0, y: 0},
+            {src: "Item_Slot_Color", x: 0, y: 0}
+          ],
+          [
+            {src: "Empty_Slot", x: 0, y: 0}
+          ],
+        ],
+        [
+          [
+            {src: "Item_Slot", x: 0, y: 0},
+            {src: "Item_Slot_Color", x: 0, y: 0}
+          ],
+          [
+            {src: "Machine_Slot", x: 0, y: 0},
+            {src: "Machine_Slot_Dirs", x: 2, y: 0},
+            {src: "Machine_Slot_Dirs", x: 0, y: 1},
+            {src: "Machine_Slot_Dirs", x: 3, y: 2},
+            {src: "Machine_Slot_Dirs", x: 3, y: 3},
+            {src: "Machine_Slot_Type", x: 0, y: 0}
+          ],
+          [
+            {src: "Item_Slot", x: 0, y: 0},
+            {src: "Item_Slot_Color", x: 0, y: 0}
+          ]
+        ]
+      ];
+
+      var height = toDraw.length;
+      var width = 0;
+      for (i = 0; i < toDraw.length; i++)
+      {
+        if (width < toDraw[i].length)
+        {
+          width = toDraw[i].length;
+        }
+      }
+      canvas.height = height * diametre;
+      canvas.width = width * diametre;
+
+      for (y = 0; y < height; y++)
+      {
+        for (x = 0; x < width; x++)
+        {
+          if (toDraw[y][x] == null)
+          {
+            toDraw[y][x] = [{src: "Empty_Slot", x: 0, y: 0}];
+          }
+
+          for (z = 0; z < toDraw[y][x].length; z++)
+          {
+            var img = toDraw[y][x][z];
+            image = new Image();
+            image.src = prefex + Images[img.src] + suffex;
+
+            ctx.drawImage(image, diametre * img.x, diametre * img.y, diametre, diametre, diametre * x, diametre * y, diametre, diametre);
+          }
+        }
+      }
+    }
+
+    function traverse(o, parents, ret)
+    {
+      for (var i in o)
+      {
+        if (o[i] !== null && typeof(o[i]) != "object")
+        {
+          ret[i] = (parents + o[i]);
+        }
+        else if (o[i] !== null && typeof(o[i]) == "object")
+        {
+          var tran = traverse(o[i], parents + i + "/", ret);
+
+          for(a in tran)
+          {
+            ret[a] = tran[a];
+          }
+        }
+      }
+
+      return ret;
+    }
+  </script>
+</html>

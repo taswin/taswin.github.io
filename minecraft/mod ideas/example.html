@@ -131,27 +131,29 @@
       var j = Math.floor(e.y / diametre);
       var y = Math.floor((e.y % diametre) / (diametre / 3));
 
-      var outcomes =
-      [
-        [
-          {src: "Empty_Slot", x: 0, y: 0}
-        ],
-        [
-          {src: "Item_Slot", x: 0, y: 0},
-          {src: "Item_Slot_Color", x: 0, y: 0}
-        ],
-        [
-          {src: "Machine_Slot", x: 0, y: 0},
-          {src: "Machine_Slot_Dirs", x: 0, y: 0},
-          {src: "Machine_Slot_Dirs", x: 0, y: 1},
-          {src: "Machine_Slot_Dirs", x: 0, y: 2},
-          {src: "Machine_Slot_Dirs", x: 0, y: 3},
-          {src: "Machine_Slot_Type", x: 0, y: 0}
-        ]
-      ];
+      var One = 1;
       var Colors = 5;
       var Dirs = 4;
       var Types = 6;
+      
+      var outcomes =
+      [
+        [
+          {src: "Empty_Slot", x: 0, y: 0, max: One}
+        ],
+        [
+          {src: "Item_Slot", x: 0, y: 0, max: One},
+          {src: "Item_Slot_Color", x: 0, y: 0, max: Colors}
+        ],
+        [
+          {src: "Machine_Slot", x: 0, y: 0, max: One},
+          {src: "Machine_Slot_Dirs", x: 0, y: 0, max: Dirs},
+          {src: "Machine_Slot_Dirs", x: 0, y: 1, max: Dirs},
+          {src: "Machine_Slot_Dirs", x: 0, y: 2, max: Dirs},
+          {src: "Machine_Slot_Dirs", x: 0, y: 3, max: Dirs},
+          {src: "Machine_Slot_Type", x: 0, y: 0, max: Types}
+        ]
+      ];
 
       if (e.ctrlKey)
       {
@@ -180,15 +182,14 @@
         }
 
         var z = 0;
-        var min = 0;
-        var max = 0;
         var value = 0;
         switch (current)
         {
           case 0:
           break;
           case 1:
-            z = 1; value = offset; max = Colors - 1;
+            z = 1;
+            value = offset;
           break;
           case 2:
             switch (x + "_" + y)
@@ -196,32 +197,29 @@
               case "1_0":
                 z = 1;
                 value = offset;
-                max = Dirs - 1;
               break;
               case "1_2":
                 z = 2;
                 value = offset;
-                max = Dirs - 1;
               break;
               case "0_1":
                 z = 3;
                 value = offset;
-                max = Dirs - 1;
               break;
               case "2_1":
                 z = 4;
                 value = offset;
-                max = Dirs - 1;
               break;
               case "1_1":
                 z = 5;
                 value = offset;
-                max = Types - 1;
               break;
             }
           break;
         }
+        
         toDraw[j][i][z].x += value;
+        var max = outcomes[current][z].max - 1;
         if (toDraw[j][i][z].x < 0) toDraw[j][i][z].x = max;
         if (toDraw[j][i][z].x > max) toDraw[j][i][z].x = 0;
         debugger;

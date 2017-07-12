@@ -78,115 +78,8 @@
 
     function loaded()
     {
-      toDraw =
-      [
-        [
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 0, y: 0}
-          ],
-          [
-            {src: "Machine_Slot", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 3, y: 1},
-            {src: "Machine_Slot_Dirs", x: 2, y: 2},
-            {src: "Machine_Slot_Dirs", x: 3, y: 3},
-            {src: "Machine_Slot_Type", x: 0, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 0, y: 0}
-          ],
-          [
-            {src: "Machine_Slot", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 3, y: 1},
-            {src: "Machine_Slot_Dirs", x: 2, y: 2},
-            {src: "Machine_Slot_Dirs", x: 3, y: 3},
-            {src: "Machine_Slot_Type", x: 0, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 0, y: 0}
-          ]
-        ],
-        [
-          [
-            {src: "Empty_Slot", x: 0, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 1, y: 0}
-          ],
-          [
-            {src: "Empty_Slot", x: 0, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 2, y: 0}
-          ],
-          [
-            {src: "Empty_Slot", x: 0, y: 0}
-          ]
-        ],
-        [
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 1, y: 0}
-          ],
-          [
-            {src: "Machine_Slot", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 2, y: 0},
-            {src: "Machine_Slot_Dirs", x: 0, y: 1},
-            {src: "Machine_Slot_Dirs", x: 3, y: 2},
-            {src: "Machine_Slot_Dirs", x: 2, y: 3},
-            {src: "Machine_Slot_Type", x: 1, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 0, y: 0}
-          ],
-          [
-            {src: "Machine_Slot", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 2, y: 0},
-            {src: "Machine_Slot_Dirs", x: 0, y: 1},
-            {src: "Machine_Slot_Dirs", x: 2, y: 2},
-            {src: "Machine_Slot_Dirs", x: 3, y: 3},
-            {src: "Machine_Slot_Type", x: 1, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 2, y: 0}
-          ]
-        ],
-        [
-          [
-            {src: "Empty_Slot", x: 0, y: 0}
-          ],
-          [
-            {src: "Empty_Slot", x: 0, y: 0}
-          ],
-          [
-            {src: "Empty_Slot", x: 0, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 3, y: 0}
-          ],
-          [
-            {src: "Machine_Slot", x: 0, y: 0},
-            {src: "Machine_Slot_Dirs", x: 2, y: 0},
-            {src: "Machine_Slot_Dirs", x: 3, y: 1},
-            {src: "Machine_Slot_Dirs", x: 3, y: 2},
-            {src: "Machine_Slot_Dirs", x: 3, y: 3},
-            {src: "Machine_Slot_Type", x: 2, y: 0}
-          ],
-          [
-            {src: "Item_Slot", x: 0, y: 0},
-            {src: "Item_Slot_Color", x: 4, y: 0}
-          ],
-        ]
-      ];
+      toDraw = new Array(10, 10);
+      
       draw();
     }
 
@@ -231,8 +124,11 @@
       if (!e.shiftKey) offset += 1;
       else offset -=1;
 
-      var i = Math.floor(e.x / diametre); var x = e.x % diametre;
-      var j = Math.floor(e.y / diametre); var y = e.y % diametre;
+      var i = Math.floor(e.x / diametre);
+      var x = Math.floor((e.x % diametre) / (diametre / 3));
+
+      var j = Math.floor(e.y / diametre);
+      var y = Math.floor((e.y % diametre) / (diametre / 3));
 
       var outcomes =
       [
@@ -252,6 +148,9 @@
           {src: "Machine_Slot_Type", x: 0, y: 0}
         ]
       ];
+      var Colors = 5;
+      var Dirs = 4;
+      var Types = 4;
 
       if (e.ctrlKey)
       {
@@ -265,22 +164,69 @@
         }
         if (outcome < 0) outcome = outcomes.length - 1;
         if (outcome > outcomes.length - 1) outcome = 0;
-        toDraw[j][i] = outcomes[outcome]
 
-        draw();
+        toDraw[j][i] = outcomes[outcome];
       }
       else
       {
-        var outcome = 0;
+        var current = 0;
         for (a in outcomes)
         {
           if (toDraw[j][i][0].src == outcomes[a][0].src)
           {
-            outcome = parseInt(a) + offset;
+            current = parseInt(a);
           }
         }
+
+        var z = 0;
+        var min = 0;
+        var max = 0;
+        var value = 0;
+        switch (current)
+        {
+          case 0:
+          break;
+          case 1:
+            z = 1; value = offset; max = Colors - 1;
+          break;
+          case 2:
+            switch (x + "_" + y)
+            {
+              case "1_0":
+                z = 1;
+                value = offset;
+                max = Dirs - 1;
+              break;
+              case "1_2":
+                z = 2;
+                value = offset;
+                max = Dirs - 1;
+              break;
+              case "0_1":
+                z = 3;
+                value = offset;
+                max = Dirs - 1;
+              break;
+              case "2_1":
+                z = 4;
+                value = offset;
+                max = Dirs - 1;
+              break;
+              case "1_1":
+                z = 5;
+                value = offset;
+                max = Types - 1;
+              break;
+            }
+          break;
+        }
+        toDraw[j][i][z].x += value;
+        if (toDraw[j][i][z].x < 0) toDraw[j][i][z].x = max;
+        if (toDraw[j][i][z].x > max) toDraw[j][i][z].x = 0;
         debugger;
       }
+
+      draw();
     }
 
     function traverse(o, parents, ret)

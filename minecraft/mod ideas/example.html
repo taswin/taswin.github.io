@@ -74,7 +74,14 @@
       document.getElementById("images").appendChild(img);
     }
 
-    var toDraw = new Array(10, 10);//[[[{src: "Empty_Slot", x: 0, y: 0}]]];
+    var toDraw = [];//[[[{src: "Empty_Slot", x: 0, y: 0}]]];
+    for (y = 0; y < 10; y++)
+    {
+      for (x = 0; x < 10; x++)
+      {
+        todraw[y][x] = [{src: "Empty_Slot", x: 0, y: 0}];
+      }
+    }
     
     function draw()
     {

@@ -16,7 +16,7 @@
   <script>
     var canvas = document.getElementById("canvas");
     var ctx = canvas.getContext("2d");
-
+    canvas.onclick = function() {clicked(event);};
     var diametre = 144;
 
     var prefex = "http://taswin.github.io/minecraft/mod ideas/";
@@ -74,9 +74,11 @@
       document.getElementById("images").appendChild(img);
     }
 
+    var toDraw = [[[{src: "Empty_Slot", x: 0, y: 0}]]];
+
     function loaded()
     {
-      var toDraw =
+      toDraw =
       [
         [
           [
@@ -185,7 +187,11 @@
           ],
         ]
       ];
+      draw();
+    }
 
+    function draw()
+    {
       var height = toDraw.length;
       var width = 0;
       for (i = 0; i < toDraw.length; i++)
@@ -216,6 +222,64 @@
             ctx.drawImage(image, diametre * img.x, diametre * img.y, diametre, diametre, diametre * x, diametre * y, diametre, diametre);
           }
         }
+      }
+    }
+
+    function clicked(e)
+    {
+      var offset = 0;
+      if (!e.shiftKey) offset += 1;
+      else offset -=1;
+
+      var i = Math.floor(e.x / diametre); var x = e.x % diametre;
+      var j = Math.floor(e.y / diametre); var y = e.y % diametre;
+
+      var outcomes =
+      [
+        [
+          {src: "Empty_Slot", x: 0, y: 0}
+        ],
+        [
+          {src: "Item_Slot", x: 0, y: 0},
+          {src: "Item_Slot_Color", x: 0, y: 0}
+        ],
+        [
+          {src: "Machine_Slot", x: 0, y: 0},
+          {src: "Machine_Slot_Dirs", x: 0, y: 0},
+          {src: "Machine_Slot_Dirs", x: 0, y: 1},
+          {src: "Machine_Slot_Dirs", x: 0, y: 2},
+          {src: "Machine_Slot_Dirs", x: 0, y: 3},
+          {src: "Machine_Slot_Type", x: 0, y: 0}
+        ]
+      ];
+
+      if (e.ctrlKey)
+      {
+        var outcome = 0;
+        for (a in outcomes)
+        {
+          if (toDraw[j][i][0].src == outcomes[a][0].src)
+          {
+            outcome = parseInt(a) + offset;
+          }
+        }
+        if (outcome < 0) outcome = outcomes.length - 1;
+        if (outcome > outcomes.length - 1) outcome = 0;
+        toDraw[j][i] = outcomes[outcome]
+
+        draw();
+      }
+      else
+      {
+        var outcome = 0;
+        for (a in outcomes)
+        {
+          if (toDraw[j][i][0].src == outcomes[a][0].src)
+          {
+            outcome = parseInt(a) + offset;
+          }
+        }
+        debugger;
       }
     }
 

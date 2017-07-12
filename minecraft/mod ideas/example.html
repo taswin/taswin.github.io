@@ -69,20 +69,13 @@
       img.src = prefex + imgs[i] + suffex;
       if (i == imgs.length - 1)
       {
-        img.onload = function() {loaded();};
+        img.onload = function() {draw();};
       }
       document.getElementById("images").appendChild(img);
     }
 
-    var toDraw = [[[{src: "Empty_Slot", x: 0, y: 0}]]];
-
-    function loaded()
-    {
-      toDraw = new Array(10, 10);
-      
-      draw();
-    }
-
+    var toDraw = new Array(10, 10);//[[[{src: "Empty_Slot", x: 0, y: 0}]]];
+    
     function draw()
     {
       var height = toDraw.length;

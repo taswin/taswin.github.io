@@ -1,0 +1,96 @@
+<body><p1 id="p1"style></p1></body>
+<script src="http://gamingJS.com/Three.js"></script>
+<script src="http://gamingJS.com/ChromeFixes.js"></script>
+<script>
+  var camera, scene, renderer;
+  var geometry, material, mesh;
+
+  var objects = [];
+  init();
+  animate();
+
+  function init() {
+
+    renderer = new THREE.CanvasRenderer();
+    renderer.setClearColorHex(0xffffff);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    scene = new THREE.Scene();
+
+    var aspect = window.innerWidth / window.innerHeight;
+    camera = new THREE.PerspectiveCamera(75, aspect, 1, 1000);
+    camera.position.z = 500;
+    scene.add(camera);
+
+    var rm = 100 * 2;
+    
+    orbG = new THREE.SphereGeometry(rm / 3, 10, 20, 100);
+    orbM = new THREE.MeshBasicMaterial({color: 0x7f7fff});
+    objects[0] = new THREE.Mesh(orbG, orbM);
+    scene.add(objects[0]);
+    
+    for (var n = 1; n <= 3; n++)
+    {
+      ringG = new THREE.TorusGeometry(rm - (n - 1) * (rm / 5), rm / 10, 20, 100);
+      ringM = new THREE.MeshBasicMaterial();
+      ringM.color.setRGB((n * 30)/255, (n * 20)/255, (255 - n * 40)/255);
+      
+      objects[n] = new THREE.Mesh(ringG, ringM);
+      objects[n - 1].add(objects[n]);
+    }
+
+    document.body.style.margin = 0;
+    document.body.style.overflow = 'hidden';
+    document.body.appendChild(renderer.domElement);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    var r = 1;
+    var aligned = true;
+    document.getElementById("p1").innerHTML = "";
+    
+    for (var n = 1; n < objects.length; n++)
+    {
+      var speed = 0.14 - ((n % 3) * 0.02) * r;
+      
+      switch (n % 2)
+      {
+        case 0:
+          objects[n].rotation.y += speed;
+          break;
+        case 1:
+          objects[n].rotation.x += speed;
+          break;
+      }
+      
+      objects[n].rotation.x = objects[n].rotation.x % (2 * Math.PI);
+      objects[n].rotation.y = objects[n].rotation.y % (2 * Math.PI);
+      
+      aligned =
+      (
+        parseInt(Math.abs(objects[n].rotation.x - 0*Math.PI) * 100, 10) / 100 <= 0.5 &&
+        parseInt(Math.abs(objects[n].rotation.y - 0*Math.PI) * 100, 10) / 100 <= 0.5 &&
+        aligned
+      ) || (
+        parseInt(Math.abs(objects[n].rotation.x - 1*Math.PI) * 100, 10) / 100 <= 0.5 &&
+        parseInt(Math.abs(objects[n].rotation.y - 1*Math.PI) * 100, 10) / 100 <= 0.5 &&
+        aligned
+      ) || (
+        parseInt(Math.abs(objects[n].rotation.x - 2*Math.PI) * 100, 10) / 100 <= 0.5 &&
+        parseInt(Math.abs(objects[n].rotation.y - 2*Math.PI) * 100, 10) / 100 <= 0.5 &&
+        aligned
+      );
+      
+      document.getElementById("p1").innerHTML += "x: " + parseInt(objects[n].rotation.x * 100, 10) / 100 + ", y: " + parseInt(objects[n].rotation.y * 100, 10) / 100 + "<br>";
+    }
+    
+    document.getElementById("p1").innerHTML += aligned;
+    //if (aligned) alert("aligned");
+    
+    objects[1].rotation.y += 0.05 * r;
+
+    renderer.render(scene, camera);
+  }
+</script>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<body>
+<pre>
+Simple harmonic motion!
+Reference circle.
+<canvas id="canvas" width="420" height="420" style="border:1px solid #000000;"></canvas>
+</pre>
+
+<script>
+canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+ctx.translate(canvas.width / 2, canvas.height / 2);
+
+main(0);
+function main(a)
+{
+    ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+    var r = (canvas.width / 2) - (canvas.width / 25), r1 = (canvas.width - (2 * r)) / 2;
+	var x = r*Math.cos(a), y = r*Math.sin(a);
+    ctx.lineWidth= r1 / 5;
+    
+    ctx.strokeStyle = "#000000";
+	ctx.beginPath();
+	ctx.arc(0, 0, r, 0, 2 * Math.PI);
+	ctx.stroke();
+	ctx.closePath();
+    
+    ctx.strokeStyle = "#6666dd";
+	ctx.beginPath();
+    {
+        ctx.moveTo(0, -r);
+        ctx.lineTo(0, r);
+    
+        ctx.moveTo(-r, 0);
+        ctx.lineTo(r, 0);
+    }
+	ctx.stroke();
+	ctx.closePath();
+    
+    ctx.strokeStyle = "#666666";
+	ctx.beginPath();
+    {
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, 0);
+    
+        ctx.moveTo(x, y);
+        ctx.lineTo(0, y);
+    
+        ctx.moveTo(x, y);
+        ctx.lineTo(0, 0);
+    }
+	ctx.stroke();
+	ctx.closePath();
+    
+	ctx.beginPath();
+	ctx.arc(x, y, r1, 0, 2 * Math.PI);
+	ctx.stroke();
+    ctx.fill();
+	ctx.closePath();
+    
+	ctx.beginPath();
+	ctx.arc(0, y, r1, 0, 2 * Math.PI);
+	ctx.stroke();
+    ctx.fill();
+	ctx.closePath();
+    
+    if(a > -2 * Math.PI) setTimeout(function() {main(a + (-2 * Math.PI) / 200);}, 100);
+}
+</script>
+
+</body>
+</html>

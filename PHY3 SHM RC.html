@@ -65,7 +65,7 @@ function main(a)
     ctx.fill();
 	ctx.closePath();
     
-    if(a > -2 * Math.PI) setTimeout(function() {main(a + (-2 * Math.PI) / 200);}, 100);
+    setTimeout(function() {main(a + (-2 * Math.PI) / 200);}, 100);
 }
 </script>
 

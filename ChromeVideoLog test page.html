@@ -1,6 +1,20 @@
 <!doctype html>
-<html>
+<html onkeypress="keypress(event)>
 	<body>
-		<video id="my_video_1_html5_api" class="vjs-tech vsc-initialized" autoplay="" data-setup="{&quot;nativeControlsForTouch&quot;: false}" preload="auto" src="https://lh3.googleusercontent.com/relvhRuQYTwPWKLmFo5RVEF3uV8jEl2DofnKWtElVkg5fZuqdWrvfGqfDWejFFsNM18-95OuNuw=m22" data-vscid="tqmczdv5d"></video>
+		<video class="vjs-tech vsc-initialized" autoplay="" data-setup="{&quot;nativeControlsForTouch&quot;: false}" preload="auto" src="https://lh3.googleusercontent.com/relvhRuQYTwPWKLmFo5RVEF3uV8jEl2DofnKWtElVkg5fZuqdWrvfGqfDWejFFsNM18-95OuNuw=m22" data-vscid="tqmczdv5d"></video>
+		<script>
+			var vid = document.getElementsByTagName("video");
+			
+			function keypress(event)
+			{
+				switch (event.keyCode)
+				{
+					case 32:
+						if (vid.paused) vid.play();
+						else vid.pause();
+						break;
+				}
+			}
+		</script>
 	</body>
 </html>

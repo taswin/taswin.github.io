@@ -152,12 +152,13 @@
 				spelltype = $('#spelltype').val();
 				$("#spelltype").attr('disabled',false);
 				$("#duration").attr('disabled',false);
-				constant = 1; 
 				break;
 			case "constant":
 				spelltype = "self";
 				$("#spelltype").attr('disabled',true);
 				$("#duration").attr('disabled',true);
+				constant = 1;
+				break;
 		}
 		
 		switch (spelltype)

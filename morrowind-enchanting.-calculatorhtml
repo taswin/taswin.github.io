@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Morrowind Enchanting Calculator</title>
+	<script
+		src="https://code.jquery.com/jquery-3.7.1.min.js"
+		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+		crossorigin="anonymous"></script>
+	<link
+		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+		rel="stylesheet"
+		integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+		crossorigin="anonymous">
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+		crossorigin="anonymous"></script>
+</head>
+<body>
+	<div class="container">
+		<div class="row my-2">
+			<b class="col-12">Enchant</b>
+			
+			<label class="col-6">Enchant Type:</label>
+			<select id="enchanttype" class="input col-6">
+				<option value="onuse">On use / hit</option>
+				<option value="constant">Constant</option>
+			</select>
+		</div>
+		<div class="row my-2">
+			<b class="col-12">Spell properties</b>
+			
+			<label class="col-6">Spell Type:</label>
+			<select id="spelltype" class="input col-6">
+				<option value="self">Self</option>
+				<option value="touch">Touch</option>
+				<option value="target">Target</option>
+			</select>
+			
+			<label class="col-6">Spell effects:</label>
+			<div id="spells" class="input col-6 select">
+				<div class="selected"></div>
+				<div class="options">
+					
+				</div>
+			</div>
+	
+			<label class="col-6">Spell base cost:</label><input type="number" id="basecost" class="input col-6" value="3" />
+	
+			<label class="col-3">Magnitude:</label><p class="col-3">min</p>
+			<input type="number" id="minmagnitude" class="input col-6" value="20" min="1" max="100" />
+	
+			<p class="col-3"/><p class="col-3">max</p>
+			<input type="number" id="maxmagnitude" class="input col-6" value="20" min="1" max="100" />
+	
+			<label class="col-6">Duration: </label>
+			<input type="number" id="duration" class="input col-6" value="11" min="1" max="1440" />
+	
+			<label class="col-6">Area: </label>
+			<input type="number" id="area" class="input col-6" value="0" min="0" max="50" />
+		</div>
+		<div class="row my-2">
+			<b class="col-12">Character skills</b>
+			
+			<label class="col-6">Enchant: </label>
+			<input type="number" id="enchant" class="input col-6" value="53" min="1" />
+			
+			<label class="col-6">Intelligence: </label>
+			<input type="number" id="intelligence" class="input col-6" value="68" min="1" />
+			
+			<label class="col-6">Luck: </label>
+			<input type="number" id="luck" class="input col-6" value="54" min="1" />
+			
+			<label class="col-6">Fatigue: (100% is rested, 0% is exhauseted)</label>
+			<input type="number" id="fatigue" class="input col-6" value="100" min="0" max="100" disabled />
+		</div>
+		<div class="row my-2">
+			<b class="col-12">Enchant stats</b>
+			
+			<label class="col-3">Enchantment Points: </label>
+			<input id="enchantmentpoints" class="output col-3" value="0" disabled />
+			
+			<label class="col-3">Cast Cost: </label>
+			<input id="castcost" class="output col-3" value="0" disabled />
+			
+			<label class="col-2">Enchant Chance: </label><p class="col-1">Vanilla</p>
+			<input id="chancevanilla" class="output col-3" value="100%" disabled />
+			
+			<p class="col-3">OpenMW</p>
+			<input id="chanceopenmw" class="output col-3" value="100%" disabled />
+		</div>
+		<div class="row">
+			<div class="col-12 palate" hidden>-</div>
+		</div>
+	</div>
+</body>
+<script>
+	$('.input').on('change', calculateenchantstats);
+
+	$('document').ready(function()
+	{
+		$.each(spellList, function (i, spell)
+		{
+			$('#spells>.options').append($('<div class="option" id="' + i + '"> <img src="' + spell.icon.replace(/ /, "_") + '"/> ' + spell.name + ' - Cost: <span class="cost">' + spell.cost + '</span></div>'));
+		});
+		
+		$('#spells>.selected').on('change', function()
+		{
+			$('#basecost').val($(this).children("span").text());
+		});
+		
+		//Custom select logic
+		$('.select>.selected').html($('.select .options .option#0').html());
+		$('.select>.options').hide();
+		
+		$(document).click(function()
+		{
+			$('.select>.options').hide();
+		})
+		
+		$('.select').click(function(event)
+		{
+			event.stopPropagation();
+			let target = $(event.target);
+			target.siblings('.options').show();
+		});
+		
+		$('.select>.options>.option').click(function(event)
+		{
+			event.stopPropagation();
+			let parent = $(event.target).parent();
+			parent.siblings('.selected').html($(this).html());
+			parent.siblings('.selected').trigger('change');
+			parent.hide();
+		});
+		//debugger
+		
+		calculateenchantstats();
+	});
+
+	function calculateenchantstats()
+	{
+		let enchanttype = $('#enchanttype').val();
+		let spelltype = "";
+		let constant = 0;
+		
+		switch (enchanttype)
+		{
+			case "onuse":
+				spelltype = $('#spelltype').val();
+				$("#spelltype").attr('disabled',false);
+				$("#duration").attr('disabled',false);
+				constant = 1; 
+				break;
+			case "constant":
+				spelltype = "self";
+				$("#spelltype").attr('disabled',true);
+				$("#duration").attr('disabled',true);
+		}
+		
+		switch (spelltype)
+		{
+			case "self":
+				$("#area").attr('disabled',true);
+				break;
+			case "touch":
+				$("#area").attr('disabled',false);
+				break;
+			case "target":
+				$("#area").attr('disabled',false);
+				break;
+		}
+		
+		//spellstats
+		let basecost = parseInt($('#basecost').val());
+		let minmagnitude = parseInt($('#minmagnitude').val());
+		let maxmagnitude = parseInt($('#maxmagnitude').val());
+		
+		let duration = parseInt($('#duration').val());
+		if (enchanttype == "constant") duration = 100;
+		
+		let area = parseInt($('#area').val());
+		if (spelltype == "self") area = 0;
+		
+		//playerstats
+		let enchant = parseInt($('#enchant').val());
+		let intelligence = parseInt($('#intelligence').val());
+		let luck = parseInt($('#luck').val());
+		let fatigue = parseInt($('#fatigue').val()) / 100;
+		
+		//formulas
+		let enchantmentpoints = basecost * ((minmagnitude + maxmagnitude) * duration + area) / 40;
+		if (spelltype == "target") enchantmentpoints *= 1.5;
+		
+		let castcost = Math.max(1, basecost * (1.1 - enchant / 100));
+		castcost = Math.round(castcost * 100) / 100;
+		let chancevanilla = (8 * enchant + 2 * intelligence + luck - 20 * enchantmentpoints * (1 + constant)) / 8;
+		chancevanilla = Math.round(chancevanilla * 100) / 100;
+		let chanceopenmw = (0.75 + fatigue / 2) * (1 - constant / 2) * (10 * enchant + 2 * intelligence + luck - 30 * enchantmentpoints) / 10;
+		chanceopenmw = Math.round(chanceopenmw * 100) / 100;
+		
+		$('#enchantmentpoints').val(enchantmentpoints);
+		$('#castcost').val(castcost);
+		$('#chancevanilla').val(chancevanilla + "%");
+		$('#chanceopenmw').val(chanceopenmw + "%");
+	}
+
+	const spellList =
+	[
+		{icon: "//images.uesp.net/5/54/MW-icon-effect-Burden.jpg", name: "Burden", description: "Temporarily increases the weight carried by the victim, causing fatigue to be lost at a greater rate. The magnitude of the effect is the weight added. When the effect ends, the added weight disappears.", cost: 1},
+		{icon: "//images.uesp.net/f/f8/MW-icon-effect-Feather.jpg", name: "Feather", description: "Reduces the target's encumbrance, resulting in a slower loss of fatigue. The magnitude is the units of weight removed from encumbrance.", cost: 1},
+		{icon: "//images.uesp.net/4/4e/MW-icon-effect-Fire_Shield.jpg", name: "Fire Shield", description: "Creates a shield of elemental fire around the subject's entire body. The spell reduces damage from Fire attacks and damages nearby enemies. Note that despite the color of the icon being that for Destruction, it is actually Alteration.", cost: 3},
+		{icon: "//images.uesp.net/6/6e/MW-icon-effect-Frost_Shield.jpg", name: "Frost Shield", description: "Creates a shield of elemental frost around the subject's entire body. The spell reduces damage from Frost attacks and damages nearby enemies.", cost: 3},
+		{icon: "//images.uesp.net/e/ef/MW-icon-effect-Jump.jpg", name: "Jump", description: "Increases the height and distance the target may jump. The magnitude is proportional to the increase in a jump's height and distance.", cost: 3},
+		{icon: "//images.uesp.net/0/08/MW-icon-effect-Levitate.jpg", name: "Levitate", description: "Temporarily enables the target to levitate into the air, moving in the direction of their choice. The magnitude is the speed at which the subject can move through the air.", cost: 3},
+		{icon: "//images.uesp.net/2/2c/MW-icon-effect-Lightning_Shield.jpg", name: "Lightning Shield", description: "Creates a shield of elemental lightning around the subject's entire body. The spell reduces damage from Shock attacks and damages nearby enemies.", cost: 3},
+		{icon: "//images.uesp.net/5/52/MW-icon-effect-Lock.jpg", name: "Lock", description: "Locks a container or door. The magnitude of the effect is the lock level placed on the container or door. The effect has no duration; the container or door remains locked until unlocked by key, pick, or spell.", cost: 2},
+		{icon: "//images.uesp.net/1/14/MW-icon-effect-Open.jpg", name: "Open", description: "Opens a locked container or door. The effect's magnitude is the highest lock level that can be opened.", cost: 6},
+		{icon: "//images.uesp.net/0/03/MW-icon-effect-Shield.jpg", name: "Shield", description: "Creates a magical shield around the subject's entire body. The spell adds its magnitude to the subject's Armor Rating.", cost: 2},
+		{icon: "//images.uesp.net/a/a9/MW-icon-effect-Slowfall.jpg", name: "Slowfall", description: "Slows the target's rate of descent, reducing damage received upon landing or falling from great heights.", cost: 3},
+		{icon: "//images.uesp.net/f/f5/MW-icon-effect-Swift_Swim.jpg", name: "Swift Swim", description: "Temporarily increases the swimming speed of the subject.", cost: 2},
+		{icon: "//images.uesp.net/b/b0/MW-icon-effect-Water_Breathing.jpg", name: "Water Breathing", description: "Permits the subject to breathe underwater for the duration of the spell.", cost: 3},
+		{icon: "//images.uesp.net/d/da/MW-icon-effect-Water_Walking.jpg", name: "Water Walking", description: "Permits the subject to walk on the surface of any body of water for the duration of the spell.", cost: 3},
+		{icon: "//images.uesp.net/f/f1/MW-icon-effect-Bound_Battle_Axe.jpg", name: "Bound Battle Axe", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric battle axe. The battle axe appears automatically equipped on the caster, displacing any currently equipped weapon to the inventory. When the effect ends, the battle axe disappears, and any previously equipped weapon is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/1/1c/MW-icon-effect-Bound_Boots.jpg", name: "Bound Boots", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light pair of Daedric boots. The boots appear automatically equipped on the caster, displacing any currently equipped foot armor to the inventory. When the effect ends, the boots disappear, and any previously equipped footwear is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/b/b7/MW-icon-effect-Bound_Cuirass.jpg", name: "Bound Cuirass", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric cuirass. The cuirass appears automatically equipped on the caster, displacing any currently equipped chest armor to the inventory. When the effect ends, the cuirass disappears, and any previously equipped chest armor is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/7/77/MW-icon-effect-Bound_Dagger.jpg", name: "Bound Dagger", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric dagger. The dagger appears automatically equipped on the caster, displacing any currently equipped weapon to the inventory. When the effect ends, the dagger disappears, and any previously equipped weapon is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/4/4c/MW-icon-effect-Bound_Gloves.jpg", name: "Bound Gloves", description: "Conjures a lesser-Daedra bound in the form of magical, wondrously light Daedric armored gloves. The armored gloves appear automatically equipped on the caster, displacing any currently equipped hand armor to the inventory. When the effect ends, the armored gloves disappear, and any previously equipped hand armor is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/9/92/MW-icon-effect-Bound_Helm.jpg", name: "Bound Helm", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric helm. The helm appears automatically equipped on the caster, displacing any currently equipped head armor to the inventory. When the effect ends, the helm disappears, and any previously equipped head armor is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/2/23/MW-icon-effect-Bound_Longbow.jpg", name: "Bound Longbow", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric longbow. The longbow appears automatically equipped on the caster, displacing any currently equipped weapon to the inventory. When the effect ends, the longbow disappears, and any previously equipped weapon is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/b/b4/MW-icon-effect-Bound_Longsword.jpg", name: "Bound Longsword", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric longsword. The longsword appears automatically equipped on the caster, displacing any currently equipped weapon to the inventory. When the effect ends, the longsword disappears, and any previously equipped weapon is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/a/a9/MW-icon-effect-Bound_Mace.jpg", name: "Bound Mace", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric mace. The mace appears automatically equipped on the caster, displacing any currently equipped weapon to the inventory. When the effect ends, the mace disappears, and any previously equipped weapon is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/4/4b/MW-icon-effect-Bound_Shield.jpg", name: "Bound Shield", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric shield. The shield appears automatically equipped on the caster, displacing any currently equipped shield to the inventory. When the effect ends, the shield disappears, and any previously equipped shield is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/b/ba/MW-icon-effect-Bound_Spear.jpg", name: "Bound Spear", description: "Conjures a lesser-Daedra bound in the form of a magical, wondrously light Daedric spear. The spear appears automatically equipped on the caster, displacing any currently equipped weapon to the inventory. When the effect ends, the spear disappears, and any previously equipped weapon is automatically re-equipped.", cost: 2},
+		{icon: "//images.uesp.net/5/54/MW-icon-effect-Call_Bear.jpg", name: "Call Bear BM", description: "Summons a Bear to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 30},
+		{icon: "//images.uesp.net/6/6a/MW-icon-effect-Call_Wolf.jpg", name: "Call Wolf BM", description: "Summons a Wolf to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 30},
+		{icon: "//images.uesp.net/0/0c/MW-icon-effect-Command_Creature.jpg", name: "Command Creature", description: "Compels a creature to fight the caster's enemies for the duration of the spell. The magnitude is the level of the creature affected. When the effect ends, the creature returns to its normal behavior.", cost: 15},
+		{icon: "//images.uesp.net/d/df/MW-icon-effect-Command_Humanoid.jpg", name: "Command Humanoid", description: "Compels a humanoid to fight the caster's enemies for the duration of the spell. The magnitude is the level of humanoid affected. When the effect ends, the humanoid returns to its normal behavior.", cost: 15},
+		{icon: "//images.uesp.net/2/20/MW-icon-effect-Summon_Ancestral_Ghost.jpg", name: "Summon Ancestral Ghost", description: "Summons an Ancestral Ghost to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 7},
+		{icon: "//images.uesp.net/2/27/MW-icon-effect-Summon_Bonelord.jpg", name: "Summon Bonelord", description: "Summons a Bonelord to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 25},
+		{icon: "//images.uesp.net/6/6d/MW-icon-effect-Summon_Lesser_Bonewalker.jpg", name: "Summon Bonewalker", description: "Summons a Bonewalker to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 13},
+		{icon: "//images.uesp.net/5/56/MW-icon-effect-Summon_Bonewolf.jpg", name: "Summon Bonewolf BM", description: "Summons a Bonewolf to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 30},
+		{icon: "//images.uesp.net/a/ac/MW-icon-effect-Summon_Clannfear.jpg", name: "Summon Centurion Sphere", description: "Summons a Centurion Sphere to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 25},
+		{icon: "//images.uesp.net/a/ac/MW-icon-effect-Summon_Clannfear.jpg", name: "Summon Clannfear", description: "Summons a Clannfear to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 22},
+		{icon: "//images.uesp.net/4/4e/MW-icon-effect-Summon_Daedroth.jpg", name: "Summon Daedroth", description: "Summons a Daedroth to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 32},
+		{icon: "//images.uesp.net/6/68/MW-icon-effect-Summon_Dremora.jpg", name: "Summon Dremora", description: "Summons a Dremora to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 28},
+		{icon: "//images.uesp.net/d/de/MW-icon-effect-Summon_Fabricant.jpg", name: "Summon Fabricant TR", description: "Summons a Fabricant to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 10},
+		{icon: "//images.uesp.net/1/15/MW-icon-effect-Summon_Flame_Atronach.jpg", name: "Summon Flame Atronach", description: "Summons a Flame Atronach to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 23},
+		{icon: "//images.uesp.net/6/62/MW-icon-effect-Summon_Frost_Atronach.jpg", name: "Summon Frost Atronach", description: "Summons a Frost Atronach to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 27},
+		{icon: "//images.uesp.net/8/88/MW-icon-effect-Summon_Golden_Saint.jpg", name: "Summon Golden Saint", description: "Summons a Golden Saint to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 55},
+		{icon: "//images.uesp.net/b/b1/MW-icon-effect-Summon_Greater_Bonewalker.jpg", name: "Summon Greater Bonewalker", description: "Summons a Greater Bonewalker to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 15},
+		{icon: "//images.uesp.net/1/12/MW-icon-effect-Summon_Hunger.jpg", name: "Summon Hunger", description: "Summons a Hunger to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 29},
+		{icon: "//images.uesp.net/c/c2/MW-icon-effect-Summon_Scamp.jpg", name: "Summon Scamp", description: "Summons a Scamp to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 12},
+		{icon: "//images.uesp.net/c/c6/MW-icon-effect-Summon_Skeletal_Minion.jpg", name: "Summon Skeletal Minion", description: "Summons a Skeleton to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 13},
+		{icon: "//images.uesp.net/5/5e/MW-icon-effect-Summon_Storm_Atronach.jpg", name: "Summon Storm Atronach", description: "Summons a Storm Atronach to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 38},
+		{icon: "//images.uesp.net/b/b2/MW-icon-effect-Summon_Winged_Twilight.jpg", name: "Summon Winged Twilight", description: "Summons a Winged Twilight to battle for the caster. It appears six feet in front of the caster and attacks any aggressive entity until the effect ends or the creature is killed. At death, or when the effect ends, the creature disappears. If summoned in town, guards will attack the caster and summoned creature on sight.", cost: 52},
+		{icon: "//images.uesp.net/c/cb/MW-icon-effect-Turn_Undead.jpg", name: "Turn Undead", description: "Temporarily increases an undead creature's flee rating (its inclination to run from an attacker). The effect's magnitude is the value increase to the flee rating.", cost: 0.2},
+		
+		{icon: "//images.uesp.net/d/dc/MW-icon-effect-Corprus.jpg", name: "Corprus", description: "Infects the victim with corprus disease. Corprus is a special disease with unique properties. The victim remains affected by the disease until it is cured.", cost: 2500},
+		{icon: "//images.uesp.net/a/a4/MW-icon-effect-Damage_Attribute.jpg", name: "Damage Attribute", description: "Lowers the value of one of the victim's base Attributes. Any derived attributes are recalculated. Attributes do not return to their original values at the end of the spell's duration and may only be restored with the appropriate restore attribute spell or potion. The magnitude is the units of attribute lost each second of the spell's duration.", cost: 8},
+		{icon: "//images.uesp.net/d/d6/MW-icon-effect-Damage_Fatigue.jpg", name: "Damage Fatigue", description: "Lowers the value of a victim's Fatigue. Fatigue does not return to its original value at the end of the spell's duration; it restores normally, or may be restored with a restore fatigue spell or potion. The magnitude is the units of fatigue lost each second of the spell's duration.", cost: 4},
+		{icon: "//images.uesp.net/7/78/MW-icon-effect-Damage_Health.jpg", name: "Damage Health", description: "Lowers the value of a victim's Health. Health does not return to its original value at the end of the spell's duration; it restores normally, or may be restored with a restore health spell or potion. The magnitude is the units of health lost each second of the spell's duration.", cost: 8},
+		{icon: "//images.uesp.net/d/d5/MW-icon-effect-Damage_Magicka.jpg", name: "Damage Magicka", description: "Lowers the value of a victim's Magicka. Magicka does not return to its original value at the end of the spell's duration; it restores normally, or may be restored with a restore magicka spell or potion. The magnitude is the units of magicka lost each second of the spell's duration.", cost: 8},
+		{icon: "//images.uesp.net/f/f4/MW-icon-effect-Damage_Skill.jpg", name: "Damage Skill", description: "Lowers the value of one of the victim's Skills. Skills do not return to their original values at the end of the spell's duration; they may only be restored with the appropriate restore skill spell or potion. The magnitude is the units of skill lost each second of the spell's duration.", cost: 8},
+		{icon: "//images.uesp.net/c/ce/MW-icon-effect-Disintegrate_Armor.jpg", name: "Disintegrate Armor", description: "Damages the health rating of an equipped piece of armor on a touched or ranged victim.", cost: 6},
+		{icon: "//images.uesp.net/7/78/MW-icon-effect-Disintegrate_Weapon.jpg", name: "Disintegrate Weapon", description: "Damages the health rating of an equipped weapon on a touched or ranged victim.", cost: 6},
+		{icon: "//images.uesp.net/5/57/MW-icon-effect-Drain_Attribute.jpg", name: "Drain Attribute", description: "Temporarily lowers the value of one of a victim's base Attributes. Any derived attributes are recalculated. Attributes return to their original values when the spell ends. The magnitude is the units of attribute reduced each second of the spell's duration.", cost: 1},
+		{icon: "//images.uesp.net/c/c4/MW-icon-effect-Drain_Fatigue.jpg", name: "Drain Fatigue", description: "Temporarily lowers the value of the victim's Fatigue. Fatigue returns to its original value when the spell ends. The magnitude is the units of fatigue reduced each second of the spell's duration.", cost: 2},
+		{icon: "//images.uesp.net/1/11/MW-icon-effect-Drain_Health.jpg", name: "Drain Health", description: "Temporarily lowers the value of the victim's Health. Health returns to its original value when the spell ends. The magnitude is the units of health reduced each second of the spell's duration.", cost: 4},
+		{icon: "//images.uesp.net/5/55/MW-icon-effect-Drain_Magicka.jpg", name: "Drain Magicka", description: "Temporarily lowers the value of a victim's Magicka. Magicka returns to its original value when the spell ends. The magnitude is the units of magicka reduced each second of the spell's duration.", cost: 4},
+		{icon: "//images.uesp.net/e/ee/MW-icon-effect-Drain_Skill.jpg", name: "Drain Skill", description: "Temporarily lowers the value of one of a victim's Skills. The skill returns to its original value when the spell ends. The magnitude is the units of skill reduced each second of the spell's duration.", cost: 1},
+		{icon: "//images.uesp.net/4/4b/MW-icon-effect-Fire_Damage.jpg", name: "Fire Damage", description: "Produces a manifestation of elemental fire. Upon contact with an object, this manifestation explodes, causing damage.", cost: 5},
+		{icon: "//images.uesp.net/5/54/MW-icon-effect-Frost_Damage.jpg", name: "Frost Damage", description: "Produces a manifestation of elemental frost. Upon contact with an object, this manifestation causes frost damage over the area of the spell.", cost: 5},
+		{icon: "//images.uesp.net/d/d0/MW-icon-effect-Poison.jpg", name: "Poison", description: "Creates a spray of poisonous acid that causes damage to the health of the victim. A victim continues to lose health from the poison effect for the duration of the spell, unless the effect is canceled by a cure poison spell or potion.", cost: 9},
+		{icon: "//images.uesp.net/5/55/MW-icon-effect-Shock_Damage.jpg", name: "Shock Damage", description: "Produces bolts of elemental lightning. The magnitude is the damage received by the first victim along a bolt's path.", cost: 7},
+		{icon: "//images.uesp.net/d/d5/MW-icon-effect-Damage_Magicka.jpg", name: "Stunted Magicka", description: "Prevents the target from regenerating magicka while sleeping for the duration of the effect.", cost: 1},
+		{icon: "//images.uesp.net/d/d8/MW-icon-effect-Sun_Damage.jpg", name: "Sun Damage", description: "Causes the victim's health to be damaged while out of doors when the sun is up. The magnitude is the amount of health damaged. Damage is modified by the relative height of the sun in the sky, with the least damage occurring at sunrise (6 A.M.) and sunset (8 P.M.).", cost: 1},
+		{icon: "//images.uesp.net/d/d7/MW-icon-effect-Vampirism.jpg", name: "Vampirism", description: "Confers upon the subject all the abilities and weaknesses of the Porphyric Hemophilia disease.", cost: 5},
+		{icon: "//images.uesp.net/1/14/MW-icon-effect-Weakness_to_Blight_Disease.jpg", name: "Weakness to Blight Disease", description: "Decreases the target's resistance to blight diseases.", cost: 4},
+		{icon: "//images.uesp.net/b/b2/MW-icon-effect-Weakness_to_Common_Disease.jpg", name: "Weakness to Common Disease", description: "Decreases the target's resistance to common diseases.", cost: 2},
+		{icon: "//images.uesp.net/1/14/MW-icon-effect-Weakness_to_Corprus_Disease.jpg", name: "Weakness to Corprus Disease", description: "Decreases the target's resistance to Corprus disease.", cost: 4},
+		{icon: "//images.uesp.net/1/15/MW-icon-effect-Weakness_to_Fire.jpg", name: "Weakness to Fire", description: "Decreases the target's resistance to Fire Damage.", cost: 2},
+		{icon: "//images.uesp.net/c/c0/MW-icon-effect-Weakness_to_Frost.jpg", name: "Weakness to Frost", description: "Decreases the target's resistance to Frost Damage.", cost: 2},
+		{icon: "//images.uesp.net/0/06/MW-icon-effect-Weakness_to_Magicka.jpg", name: "Weakness to Magicka", description: "Decreases the target's resistance to damage from non-elemental magic attacks.", cost: 2},
+		{icon: "//images.uesp.net/c/c3/MW-icon-effect-Weakness_to_Normal_Weapons.jpg", name: "Weakness to Normal Weapons", description: "Decreases the target's resistance to damage from normal weapons (non-enchanted or silver).", cost: 2},
+		{icon: "//images.uesp.net/4/43/MW-icon-effect-Weakness_to_Poison.jpg", name: "Weakness to Poison", description: "Decreases the target's resistance to Poison.", cost: 2},
+		{icon: "//images.uesp.net/a/af/MW-icon-effect-Weakness_to_Shock.jpg", name: "Weakness to Shock", description: "Decreases the target's resistance to Shock Damage.", cost: 2},
+
+		{icon: "//images.uesp.net/b/b1/MW-icon-effect-Blind.jpg", name: "Blind", description: "Obscures the vision of the victim, reducing their chance to strike an opponent with weapon or hand-to-hand attacks.", cost: 1},
+		{icon: "//images.uesp.net/7/76/MW-icon-effect-Calm_Creature.jpg", name: "Calm Creature", description: "Temporarily reduces a creature's attack rating (its inclination to attack). The effect's magnitude is the value of the reduction of the attack rating. When the effect ends, the creature's attack rating returns to normal. Humanoids, undead, Daedra, and artifacts are not affected by this spell.", cost: 1},
+		{icon: "//images.uesp.net/6/6c/MW-icon-effect-Calm_Humanoid.jpg", name: "Calm Humanoid", description: "Temporarily reduces a humanoid's attack rating (its inclination to attack). The effect's magnitude is the value of the reduction of the attack rating. When the effect ends, the humanoid's attack rating returns to normal. Creatures, undead, Daedra, and artifacts are not affected by this spell.", cost: 1},
+		{icon: "//images.uesp.net/e/e4/MW-icon-effect-Chameleon.jpg", name: "Chameleon", description: "Allows the target to blend into the surroundings and remain unseen. The target can attack and use objects without disrupting the effect. The spell ranges from 1% to 100% effectiveness, the magnitude being equal to the degree of concealment.", cost: 1},
+		{icon: "//images.uesp.net/a/ae/MW-icon-effect-Charm.jpg", name: "Charm", description: "Temporarily increases the target's disposition towards the caster. When the effect ends, the target's disposition returns to its original value.", cost: 5},
+		{icon: "//images.uesp.net/7/78/MW-icon-effect-Demoralize_Creature.jpg", name: "Demoralize Creature", description: "Temporarily increases a creature's flee rating (its inclination to run from an attacker). The effect's magnitude is the value of the increase of the flee rating. When the effect ends, the creature's flee rating returns to normal. Humanoids, undead, Daedra, and artifacts are not affected by this spell.", cost: 1},
+		{icon: "//images.uesp.net/9/97/MW-icon-effect-Demoralize_Humanoid.jpg", name: "Demoralize Humanoid", description: "Temporarily increases a humanoid's flee rating (its inclination to flee from an attacker). The effect's magnitude is the value of the increase of the flee rating. When the effect ends, the humanoid's flee rating returns to normal. Creatures, undead, Daedra, and artifacts are not affected by this spell. Note: This effect is coded as Mysticism, when it should clearly be Illusion.", cost: 1},
+		{icon: "//images.uesp.net/e/e5/MW-icon-effect-Frenzy_Creature.jpg", name: "Frenzy Creature", description: "Temporarily increases a creature's attack rating (its inclination to attack). The effect's magnitude is the value of the increase in the attack rating. When the effect ends, the creature's attack rating returns to normal. Humanoids, undead, Daedra, and artifacts are not affected by this spell.", cost: 1},
+		{icon: "//images.uesp.net/5/51/MW-icon-effect-Frenzy_Humanoid.jpg", name: "Frenzy Humanoid", description: "Temporarily increases a humanoid's attack rating (its inclination to attack). The effect's magnitude is the value of the increase in the attack rating. When the effect ends, the humanoid's attack rating returns to normal. Creatures, undead, Daedra, and artifacts are not affected by this spell.", cost: 1},
+		{icon: "//images.uesp.net/8/80/MW-icon-effect-Invisibility.jpg", name: "Invisibility", description: "Conceals the presence of the subject from observers. If the subject attacks, speaks, or activates an object, the effect is dispelled. The magnitude of this effect is not variable; the subject is always 100% invisible.", cost: 20},
+		{icon: "//images.uesp.net/0/0f/MW-icon-effect-Light.jpg", name: "Light", description: "Creates a projectile of tangible light. Upon striking a target, the projectile illuminates the area for the duration of the effect. The projectile does not cause any damage.", cost: 0.2},
+		{icon: "//images.uesp.net/3/3a/MW-icon-effect-Night_Eye.jpg", name: "Night Eye", description: "Temporarily endows the subject with the ability to see in the dark. The effect's magnitude is the degree to which the ambient light level is raised.", cost: 0.2},
+		{icon: "//images.uesp.net/4/48/MW-icon-effect-Paralyze.jpg", name: "Paralyze", description: "Renders the target unable to move. This effect has no magnitude, only duration.", cost: 40},
+		{icon: "//images.uesp.net/1/1c/MW-icon-effect-Rally_Creature.jpg", name: "Rally Creature", description: "Temporarily decreases a creature's flee rating (its inclination to flee from an attacker). The effect's magnitude is the value of the decrease in the flee rating. When the effect ends, the creature's flee rating returns to normal. Humanoids, undead, Daedra, and artifacts are not affected by this spell.", cost: 0.2},
+		{icon: "//images.uesp.net/d/d4/MW-icon-effect-Rally_Humanoid.jpg", name: "Rally Humanoid", description: "Temporarily decreases a humanoid's flee rating (its inclination to flee from an attacker). The effect's magnitude is the value of the decrease in the flee rating. When the effect ends, the humanoid's flee rating returns to normal. Creatures, undead, Daedra, and artifacts are not affected by this spell.", cost: 0.2},
+		{icon: "//images.uesp.net/f/fe/MW-icon-effect-Sanctuary.jpg", name: "Sanctuary", description: "Causes the target to be harder to hit. The magnitude is the value that is added to the target's chance to dodge attacks.", cost: 1},
+		{icon: "//images.uesp.net/b/b9/MW-icon-effect-Silence.jpg", name: "Silence", description: "Temporarily renders a victim unable to cast spells.", cost: 40},
+		{icon: "//images.uesp.net/d/d3/MW-icon-effect-Sound.jpg", name: "Sound", description: "Produces a disorienting noise in the victim's mind. The magnitude is the reduction in the victim's chance to successfully cast spells.", cost: 3},
+
+		{icon: "//images.uesp.net/c/ca/MW-icon-effect-Absorb_Attribute.jpg", name: "Absorb Attribute", description: "Temporarily transfers a portion of one of the victim's Attributes to the caster. The caster may exceed the attribute's maximum of 100 for the duration of the spell. When the effect ends, both caster and victim attributes return to their original values.", cost: 2},
+		{icon: "//images.uesp.net/b/bd/MW-icon-effect-Absorb_Fatigue.jpg", name: "Absorb Fatigue", description: "Permanently transfers Fatigue from the victim to the caster, wearying the victim and invigorating the caster. The caster may not exceed their own natural maximum Fatigue value, but even if the caster is at full Fatigue, casting this spell will still drain the target's Fatigue.", cost: 4},
+		{icon: "//images.uesp.net/0/0b/MW-icon-effect-Absorb_Health.jpg", name: "Absorb Health", description: "Permanently transfers Health from the victim to the caster, injuring the victim and vitalizing the caster. The caster may not exceed their own natural maximum Health value, but even if the caster is at full Health, casting this spell will still drain the target's Health.", cost: 8},
+		{icon: "//images.uesp.net/e/e2/MW-icon-effect-Absorb_Magicka.jpg", name: "Absorb Magicka", description: "Transfers Magicka from the victim to the caster, reducing the victim's spellcasting reservoirs and filling the caster's. The caster may not exceed their own natural maximum Magicka value, but even if the caster is at full Magicka, casting this spell will still drain the target's Magicka.", cost: 8},
+		{icon: "//images.uesp.net/f/fe/MW-icon-effect-Absorb_Skill.jpg", name: "Absorb Skill", description: "Temporarily reduces one of the victim's Skills and increases the caster's. When the effect ends, the caster loses the borrowed skill, and the victim regains all lost skill. Unused in the game, and only found on a developers' test item, Clutterbane.", cost: 2},
+		{icon: "//images.uesp.net/e/e6/MW-icon-effect-Almsivi_Intervention.jpg", name: "Almsivi Intervention", description: "The subject of this effect is transported instantaneously to the altar of the nearest shrine or edifice of the Tribunal Temple.", cost: 150},
+		{icon: "//images.uesp.net/9/97/MW-icon-effect-Detect_Animal.jpg", name: "Detect Animal", description: "Allows the caster of this effect to detect any entity animated by a spirit; said entities appear on the map as red-circle symbols. This effect includes all classes of monsters (creatures, undead, Daedra, Dwemer constructs). Humanoids are NOT detected by this spell. The magnitude is the range in feet from the caster that animals are detected.", cost: 0.75},
+		{icon: "//images.uesp.net/b/b9/MW-icon-effect-Detect_Enchantment.jpg", name: "Detect Enchantment", description: "Allows the caster of this effect to detect enchanted items; said items appear on the map as blue-circle symbols. The effect's magnitude is the range in feet from the caster that enchanted items are detected.", cost: 1},
+		{icon: "//images.uesp.net/b/b7/MW-icon-effect-Detect_Key.jpg", name: "Detect Key", description: "Allows the caster of this effect to detect Keys; their locations appear on the map as green-circle symbols. The effect's magnitude is the range in feet from the caster that keys are detected.", cost: 1},
+		{icon: "//images.uesp.net/5/50/MW-icon-effect-Dispel.jpg", name: "Dispel", description: "Removes magicka-based spell effects from the subject. Dispel does not affect abilities, disease, curses, or constant magic item effects. The magnitude is the chance an effect is removed.", cost: 5},
+		{icon: "//images.uesp.net/6/67/MW-icon-effect-Divine_Intervention.jpg", name: "Divine Intervention", description: "Transports the subject of this effect instantaneously to the altar of the nearest shrine of the Imperial Cult.", cost: 150},
+		{icon: "//images.uesp.net/4/4e/MW-icon-effect-Mark.jpg", name: "Mark", description: "Establishes a target location for the Recall spell to act upon. The location is established directly at the position of the caster when the spell is used.", cost: 350},
+		{icon: "//images.uesp.net/0/05/MW-icon-effect-Recall.jpg", name: "Recall", description: "The subject is instantaneously transported to the point set by the Mark spell.", cost: 350},
+		{icon: "//images.uesp.net/e/e3/MW-icon-effect-Reflect.jpg", name: "Reflect", description: "Allows the subject to reflect spell effects back at an attacking caster. The effect's magnitude is the chance that a spell effect is reflected. If the reflect spell is successful, the opposing spells reflect back at the attacking caster. If the reflect spell fails, the opposing spells take effect normally.", cost: 10},
+		{icon: "//images.uesp.net/e/e8/MW-icon-effect-Soultrap.jpg", name: "Soultrap", description: "Traps the soul of the targeted creature in the smallest empty soul gem in the caster's inventory, if the creature is killed during the spell's duration.", cost: 2},
+		{icon: "//images.uesp.net/8/81/MW-icon-effect-Spell_Absorption.jpg", name: "Spell Absorption", description: "Allows the caster to absorb an attacking spell's power as an increase to their reservoir of magicka. The magnitude is the chance that an attacking spell will be absorbed. If successful, the caster absorbs the attacking spell's cost in spell points as increased magicka. The caster's magicka cannot be increased above the caster's standard magicka level. If failed, the attacking spell takes effect normally.", cost: 10},
+		{icon: "//images.uesp.net/7/74/MW-icon-effect-Telekinesis.jpg", name: "Telekinesis", description: "Allows the subject to pick up items, open containers, and open interior doors from a distance. The magnitude is the number of feet the subject can reach.", cost: 1},
+
+		{icon: "//images.uesp.net/a/a3/MW-icon-effect-Cure_Blight_Disease.jpg", name: "Cure Blight Disease", description: "Cures the subject of any and all Blight Diseases, and all associated traits.", cost: 2000},
+		{icon: "//images.uesp.net/e/e5/MW-icon-effect-Cure_Common_Disease.jpg", name: "Cure Common Disease", description: "Cures the subject of any and all Common Diseases.", cost: 300},
+		{icon: "//images.uesp.net/0/06/MW-icon-effect-Cure_Corprus_Disease.jpg", name: "Cure Corprus Disease", description: "Cures the subject of Corprus.", cost: 2500},
+		{icon: "//images.uesp.net/4/4b/MW-icon-effect-Cure_Paralyzation.jpg", name: "Cure Paralyzation", description: "Cures the subject of paralyzation.", cost: 100},
+		{icon: "//images.uesp.net/7/72/MW-icon-effect-Cure_Poison.jpg", name: "Cure Poison", description: "Cures the subject of any Poison affecting them. The effect does not restore health lost to poisoning.", cost: 100},
+		{icon: "//images.uesp.net/4/4d/MW-icon-effect-Fortify_Attack.jpg", name: "Fortify Attack", description: "Raises the subject's chance of making a successful hit with a weapon or hand-to-hand attack. This effect may be obtained only by completing the Threads of the Webspinner quest for the Morag Tong.", cost: 1},
+		{icon: "//images.uesp.net/e/e6/MW-icon-effect-Fortify_Attribute.jpg", name: "Fortify Attribute", description: "Temporarily increases the value of one of a subject's Attributes. Any derived attributes are recalculated. Attributes return to their original values when the spell ends. The magnitude is the value of the increase of the attribute.", cost: 1},
+		{icon: "//images.uesp.net/0/03/MW-icon-effect-Fortify_Fatigue.jpg", name: "Fortify Fatigue", description: "Temporarily increases the value of a subject's Fatigue. Fatigue returns to its original values when the spell ends. The magnitude is the value of the increase in fatigue.", cost: 0.5},
+		{icon: "//images.uesp.net/f/fb/MW-icon-effect-Fortify_Health.jpg", name: "Fortify Health", description: "Temporarily increases the value of a subject's Health. Health returns to its original values when the spell ends. The magnitude is the value of the increase in health.", cost: 1},
+		{icon: "//images.uesp.net/6/6c/MW-icon-effect-Fortify_Magicka.jpg", name: "Fortify Magicka", description: "Temporarily increases the value of a subject's Magicka. Magicka returns to its original values when the spell ends. The magnitude is the value of the increase in magicka.", cost: 1},
+		{icon: "//images.uesp.net/0/02/MW-icon-effect-Fortify_Maximum_Magicka.jpg", name: "Fortify Maximum Magicka", description: "Modifies the multiplier used to derive the amount of magicka the subject currently retains. The magnitude is multiplied by the subject's Intelligence to derive the magicka. The standard multiplier is 0.5. This effect is only available from Birthsigns or Racial effects.", cost: 4},
+		{icon: "//images.uesp.net/4/4d/MW-icon-effect-Fortify_Skill.jpg", name: "Fortify Skill", description: "Temporarily increases the value of one of the subject's Skills. The skill returns to its original value when the spell ends. The magnitude is the value of the increase in the skill. This spell may only be found by completing the Threads of the Webspinner quest for the Morag Tong in versions of Morrowind below 1.2. This spell may be purchased at the Temple of Almalexia in the Tribunal expansion pack.", cost: 1},
+		{icon: "//images.uesp.net/b/bd/MW-icon-effect-Remove_Curse.jpg", name: "Remove Curse", description: "Removes the effect of a curse from the target. (Since there are no curses in the game, this is not available anywhere.)", cost: 15},
+		{icon: "//images.uesp.net/f/f2/MW-icon-effect-Resist_Blight_Disease.jpg", name: "Resist Blight Disease", description: "Increases the subject's resistance to Blight Diseases. The magnitude is the percentage of reduction in damage caused by blight disease effects.", cost: 5},
+		{icon: "//images.uesp.net/a/a5/MW-icon-effect-Resist_Common_Disease.jpg", name: "Resist Common Disease", description: "Increases the subject's resistance to Common Diseases. The magnitude is the percentage of reduction in damage caused by common disease effects.", cost: 2},
+		{icon: "//images.uesp.net/5/58/MW-icon-effect-Resist_Corprus_Disease.jpg", name: "Resist Corprus Disease", description: "Increases the subject's resistance to Corprus disease. The magnitude is the percentage of reduction in damage caused by corprus disease effects.", cost: 5},
+		{icon: "//images.uesp.net/0/04/MW-icon-effect-Resist_Fire.jpg", name: "Resist Fire", description: "Increases the target's resistance to Fire Damage. The magnitude is the percentage of reduction in damage caused by elemental fire damage effects.", cost: 2},
+		{icon: "//images.uesp.net/0/08/MW-icon-effect-Resist_Frost.jpg", name: "Resist Frost", description: "Increases the target's resistance to Frost Damage. The magnitude is the percentage of reduction in damage caused by elemental frost damage effects.", cost: 2},
+		{icon: "//images.uesp.net/8/84/MW-icon-effect-Resist_Magicka.jpg", name: "Resist Magicka", description: "Increases the target's resistance to damage from magicka attacks not based on elemental forces. The magnitude is the percentage of reduction in damage caused by non-elemental magic attacks.", cost: 2},
+		{icon: "//images.uesp.net/5/50/MW-icon-effect-Resist_Normal_Weapons.jpg", name: "Resist Normal Weapons", description: "Increases the target's resistance to damage caused by any non-enchanted or silver weapon. The magnitude is the percentage of reduction in damage caused by normal weapons.", cost: 5},
+		{icon: "//images.uesp.net/c/c9/MW-icon-effect-Resist_Paralysis.jpg", name: "Resist Paralysis", description: "Increases the target's resistance to paralysis. The magnitude is the percentage added to the subject's standard resistance.", cost: 0.2},
+		{icon: "//images.uesp.net/e/ea/MW-icon-effect-Resist_Poison.jpg", name: "Resist Poison", description: "Increases the target's resistance to Poison. The magnitude is the percentage of reduction in damage caused by poison effects.", cost: 2},
+		{icon: "//images.uesp.net/4/48/MW-icon-effect-Resist_Shock.jpg", name: "Resist Shock", description: "Increases the target's resistance to Shock Damage. The magnitude is the percentage of reduction in damage caused by elemental shock damage effects.", cost: 2},
+		{icon: "//images.uesp.net/8/85/MW-icon-effect-Restore_Attribute.jpg", name: "Restore Attribute", description: "Restores any of the subject's Attributes that have been reduced by magical attack. The magnitude is the units of attribute restored for each second of the spell's duration.", cost: 1},
+		{icon: "//images.uesp.net/2/2f/MW-icon-effect-Restore_Fatigue.jpg", name: "Restore Fatigue", description: "Restores the subject's Fatigue if it has been affected by magical attack or loss. The magnitude is the units of fatigue restored for each second of the spell's duration.", cost: 1},
+		{icon: "//images.uesp.net/8/82/MW-icon-effect-Restore_Health.jpg", name: "Restore Health", description: "Restores the subject's Health if it has been affected by magical or normal attack. The magnitude is the units of health restored for each second of the spell's duration.", cost: 5},
+		{icon: "//images.uesp.net/d/d8/MW-icon-effect-Restore_Magicka.jpg", name: "Restore Magicka", description: "Restores the subject's Magicka to its original value if it has been affected by magical attack or use. The magnitude is the units of magicka restored for each second of the spell's duration.", cost: 5},
+		{icon: "//images.uesp.net/6/67/MW-icon-effect-Restore_Skill.jpg", name: "Restore Skill", description: "Restores the subject's Skills if they have been reduced by magical attack. The magnitude is the units of skill restored for each second of the spell's duration.", cost: 1}
+	];
+</script>
+<style>
+	:root
+	{
+		--color-0: #000000;
+		--color-1: #2e324d;
+		--color-2: #586091;
+		--color-3: #727495;
+		--color-4: #b4aecc;
+		--color-5: #ffffff;
+	}
+
+	body,.container
+	{
+		background: var(--color-1);
+	}
+	.row
+	{
+		background: var(--color-2);
+	}
+	.input,.output
+	{
+		background: var(--color-3);
+		color: var(--color-4);
+	}
+	.input,.output:disabled
+	{
+		background: var(--color-3);
+		color: var(--color-4);
+	}
+
+	.select>.options
+	{
+		position: absolute;
+		z-index: 1;
+		background: var(--color-3);
+		border: 2px solid var(--color-4);
+		height: 400px;
+		overflow-y: auto;
+	}
+
+	.palate
+	{
+		background: linear-gradient(90deg,
+			var(--color-0) 0%, var(--color-0) 16%,
+			var(--color-1) 16%, var(--color-1) 33%,
+			var(--color-2) 33%, var(--color-2) 50%,
+			var(--color-3) 50%, var(--color-3) 66%,
+			var(--color-4) 66%, var(--color-4) 84%,
+			var(--color-5) 84%, var(--color-5) 100%);
+	}
+
+	input.input
+	{
+		width: 40px;
+	}
+	.output
+	{
+		width: 60px;
+	}
+</style>
+</html>

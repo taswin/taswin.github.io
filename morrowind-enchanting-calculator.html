@@ -198,7 +198,7 @@
 		castcost = Math.round(castcost * 100) / 100;
 		let chancevanilla = (8 * enchant + 2 * intelligence + luck - 20 * enchantmentpoints * (1 + constant)) / 8;
 		chancevanilla = Math.round(chancevanilla * 100) / 100;
-		let chanceopenmw = (0.75 + fatigue / 2) * (1 - constant / 2) * (10 * enchant + 2 * intelligence + luck - 30 * enchantmentpoints) / 10;
+		let chanceopenmw = (0.75 + fatigue / 2) * (1 - constant / 2) * (enchant + intelligence / 5 + luck / 10 - 3 * enchantmentpoints);
 		chanceopenmw = Math.round(chanceopenmw * 100) / 100;
 		
 		$('#enchantmentpoints').val(enchantmentpoints);
